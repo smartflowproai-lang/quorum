@@ -1,0 +1,20 @@
+{
+  "name": "@quorum/judge",
+  "version": "0.1.0",
+  "description": "QUORUM judge agent — PRE-KICKOFF DRAFT 2026-04-24",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "test": "echo \"no tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "viem": "^2.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "license": "MIT"
+}

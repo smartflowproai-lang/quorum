@@ -1,0 +1,19 @@
+{
+  "name": "@quorum/shared",
+  "version": "0.1.0",
+  "description": "QUORUM shared helpers — AXL wrapper, 0G storage client, ERC-8004 registry",
+  "main": "axl-wrap.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo no-tests && exit 0"
+  },
+  "dependencies": {
+    "viem": "^2.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "license": "MIT"
+}
