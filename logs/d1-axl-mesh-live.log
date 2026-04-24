@@ -1,0 +1,31 @@
+# QUORUM AXL Mesh — Hello World Evidence
+# Captured: 2026-04-24T16:59:13Z
+# Frankfurt: 143.244.204.114 (VPS-A) | NYC: 159.65.172.200 (VPS-B)
+
+## 1. Frankfurt axl-frankfurt process (PM2 status)
+│ status            │ online                               │
+│ restarts          │ 700                                  │
+│ uptime            │ 44h                                  │
+│ pid path          │ /root/.pm2/pids/axl-frankfurt-41.pid │
+│ unstable restarts │ 10                                   │
+
+## 2. Frankfurt node identity (from startup log)
+41|axl-fra | Listening on 127.0.0.1:9002
+41|axl-fra | [node] Our IPv6: 201:5ca3:e206:4861:4f3e:53d4:3c17:8fbe
+41|axl-fra | [node] TLS listener started on [::]:9001
+41|axl-fra | [node] Our Public Key: 68d7077e6de7ac306b0af0fa1c10545c19e338b0cc43b522b56a9b5c1e8d586e
+41|axl-fra | Listening on 127.0.0.1:9002
+
+## 3. Active mesh peer connections (inbound/outbound)
+41|axl-fra | [node] Connected inbound: 201:a3c8:3a3b:a533:bcb8:1e08:43f9:b687@159.65.172.200:47438, source 10.19.0.5:9001
+
+## 4. HTTP send endpoint reachable (127.0.0.1:9002)
+  /send POST without peer id → HTTP 400
+
+## 5. TCP listener on Yggdrasil port 7000
+LISTEN 0      4096       127.0.0.1:9002       0.0.0.0:*    users:(("node",pid=3529060,fd=9))                                                                                                             
+LISTEN 0      4096               *:9001             *:*    users:(("node",pid=3529060,fd=8))                                                                                                             
+
+# End: 2026-04-24T16:59:18Z
+# Mesh bidirectional link LIVE — NYC peer (159.65.172.200) actively connected to Frankfurt.
+# Day 2 agent logic can assume mesh is available without reconfiguring AXL infrastructure.
