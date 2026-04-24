@@ -1,0 +1,65 @@
+#!/bin/bash
+# QUORUM pre-commit hook — sanity checks before every commit
+# Install: `./setup-hooks.sh` from repo root
+
+set -e
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+FAIL=0
+
+# Check 1: secrets in staged diff
+SECRETS=$(git diff --cached -U0 | grep -iE "(private_key|api_key|secret|password).*=.*['\"][a-zA-Z0-9]{20,}" | grep -v "^-" || true)
+if [ -n "$SECRETS" ]; then
+  echo "❌ PRE-COMMIT: possible secret in staged diff:"
+  echo "$SECRETS" | head -3
+  echo "If false positive, commit with --no-verify (but think twice)."
+  FAIL=1
+fi
+
+# Check 2: .env files shouldn't be committed
+ENV_STAGED=$(echo "$STAGED" | grep -E "^\.env$|/\.env$" || true)
+if [ -n "$ENV_STAGED" ]; then
+  echo "❌ PRE-COMMIT: .env file staged — should be in .gitignore:"
+  echo "$ENV_STAGED"
+  FAIL=1
+fi
+
+# Check 3: commit message quality (via prepare-commit-msg not implemented here, but warn on amend)
+MSG_FILE=".git/COMMIT_EDITMSG"
+if [ -f "$MSG_FILE" ]; then
+  MSG=$(head -1 "$MSG_FILE" | grep -v "^#" | head -1 || echo "")
+  if [ -n "$MSG" ] && [ ${#MSG} -lt 15 ]; then
+    echo "⚠️  PRE-COMMIT: commit message very short (\"$MSG\") — judges read commit history, consider more descriptive"
+  fi
+fi
+
+# Check 4: Day 7+ audit requirement (ultrareview log must exist in last 48h)
+DAY_NUMBER=$(( ( $(date +%s) - $(date -jf "%Y-%m-%d" "2026-04-24" +%s 2>/dev/null || date -d "2026-04-24" +%s) ) / 86400 + 1 ))
+if [ "$DAY_NUMBER" -ge 7 ]; then
+  LATEST_REVIEW=$(find logs/ -name "ultrareview-*.md" -newermt "$(date -v-48H '+%Y-%m-%d' 2>/dev/null || date -d '48 hours ago' '+%Y-%m-%d')" 2>/dev/null | head -1)
+  if [ -z "$LATEST_REVIEW" ]; then
+    echo "⚠️  PRE-COMMIT: Day $DAY_NUMBER — no /ultrareview log in last 48h. Run /ultrareview before next commit."
+  fi
+fi
+
+# Check 5: Day 10 submission day — all 3 ultrareview logs required
+if [ "$DAY_NUMBER" -eq 10 ]; then
+  REVIEW_COUNT=$(find logs/ -name "ultrareview-*.md" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$REVIEW_COUNT" -lt 3 ]; then
+    echo "❌ PRE-COMMIT: Day 10 submission day — only $REVIEW_COUNT /ultrareview logs found (need 3: MVP/post-fix/pre-submit). Blocked."
+    FAIL=1
+  fi
+fi
+
+if [ "$FAIL" -eq 1 ]; then
+  echo ""
+  echo "Pre-commit BLOCKED. Fix above or bypass with --no-verify (NOT recommended)."
+  exit 1
+fi
+
+exit 0

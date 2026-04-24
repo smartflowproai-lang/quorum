@@ -1,0 +1,62 @@
+# PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
+# QUORUM — 4-agent mesh for ETHGlobal OpenAgents 2026
+
+version: "3.9"
+
+services:
+  scout:
+    build:
+      context: .
+      dockerfile: agents/scout/Dockerfile
+    container_name: quorum-scout
+    env_file: .env
+    volumes:
+      - axl-mesh:/var/run/axl
+      - ./shared:/app/shared:ro
+    networks: [quorum-mesh]
+    restart: unless-stopped
+
+  judge:
+    build:
+      context: .
+      dockerfile: agents/judge/Dockerfile
+    container_name: quorum-judge
+    env_file: .env
+    volumes:
+      - axl-mesh:/var/run/axl
+      - ./shared:/app/shared:ro
+    networks: [quorum-mesh]
+    restart: unless-stopped
+    depends_on: [scout]
+
+  executor:
+    build:
+      context: .
+      dockerfile: agents/executor/Dockerfile
+    container_name: quorum-executor
+    env_file: .env
+    volumes:
+      - axl-mesh:/var/run/axl
+      - ./shared:/app/shared:ro
+    networks: [quorum-mesh]
+    restart: unless-stopped
+    depends_on: [judge]
+
+  treasurer:
+    build:
+      context: .
+      dockerfile: agents/treasurer/Dockerfile
+    container_name: quorum-treasurer
+    env_file: .env
+    volumes:
+      - axl-mesh:/var/run/axl
+      - ./shared:/app/shared:ro
+    networks: [quorum-mesh]
+    restart: unless-stopped
+
+volumes:
+  axl-mesh:
+
+networks:
+  quorum-mesh:
+    driver: bridge

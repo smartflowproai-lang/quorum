@@ -1,0 +1,18 @@
+# PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
+name: Docker Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        agent: [scout, judge, executor, treasurer]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build ${{ matrix.agent }}
+        run: docker build -f agents/${{ matrix.agent }}/Dockerfile -t quorum-${{ matrix.agent }}:${{ github.sha }} .

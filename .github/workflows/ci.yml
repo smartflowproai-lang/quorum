@@ -1,0 +1,44 @@
+# PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install shared
+        run: cd shared && npm install
+      - name: Install agents
+        run: |
+          for a in scout judge executor treasurer; do
+            cd agents/$a && npm install && cd ../..
+          done
+      - name: Typecheck agents
+        run: |
+          for a in scout judge executor treasurer; do
+            cd agents/$a && npx tsc --noEmit && cd ../..
+          done
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: lint-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run tests
+        run: |
+          for a in scout judge executor treasurer; do
+            cd agents/$a && npm test --if-present && cd ../..
+          done

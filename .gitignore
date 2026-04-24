@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Keys & secrets (NEVER commit)
+*.pem
+*.key
+*-privkey.txt
+wallet-secret.json
+secrets/
+treasurer/wallet/*-priv.*
+
+# Logs
+*.log
+logs/
+axl-*.log
+scout-*.log
+judge-*.log
+executor-*.log
+treasurer-*.log
+
+# Data (models + backtest artefacts only — raw data never committed)
+*.db
+*.sqlite
+*.sqlite3
+models/*.bin
+models/*.safetensors
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Demo raw footage (final exports go to YouTube, not repo)
+demo/raw-recordings/
+demo/*.mp4
+demo/*.mov
+
+# 0G storage local cache
+.0g-cache/
+
+# AXL peer state (regenerable)
+.axl/peer-state/
+
+# CI artefacts
+.github/workflows/*.log
