@@ -1,46 +1,104 @@
-// PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
-// AXL mesh wrapper — Frankfurt (VPS-A) ↔ NYC (VPS-B) signed message exchange
-// Day-1 target: single signed message roundtrip confirmed
-// See ref-architecture-deep.md §AXL integration for binary location + peer ID management
+// shared/axl-wrap.ts — AXL HTTP API wrapper
+// AXL node exposes a local HTTP API on localhost:9002. This module provides typed
+// send/recv helpers so each QUORUM agent talks to its co-located AXL node without
+// depending on the AXL binary being in PATH.
+//
+// Architecture:
+//   Frankfurt VPS: Scout agent + AXL node-A  (localhost:9002)
+//   NYC VPS:       Judge agent  + AXL node-B  (localhost:9002)
+//   Both nodes are pre-peered via TLS:9001 (established Day 1).
+//
+// Design decision: HTTP over binary exec.
+// The AXL node exposes a stable REST interface at localhost:9002.
+// Using fetch (Node 18+) avoids binary PATH issues in Docker containers and
+// is simpler to mock in tests. The binary-exec approach was a Day-1 stub.
 
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { readFileSync } from 'fs';
+const AXL_HTTP_BASE = process.env.AXL_HTTP_BASE ?? 'http://localhost:9002';
 
-const execFileP = promisify(execFile);
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-const AXL_BIN = process.env.AXL_BIN || '/usr/local/bin/axl';
-const AXL_SOCKET = process.env.AXL_SOCKET || '/var/run/axl/axl.sock';
-
-export interface AxlMessage {
+export interface AxlEnvelope {
+  /** Originating agent / peer ID */
   from: string;
-  to: string;
-  payload: unknown;
-  signature?: string;
+  /** Serialised JSON payload (callers parse after receiving) */
+  data: string;
+  /** Unix epoch ms from the receiving node */
   ts: number;
 }
 
-export async function axlSend(peer: string, payload: unknown): Promise<void> {
-  // TODO Day-1: replace with actual axl CLI call — this is a stub for compose wiring
-  const msg: AxlMessage = { from: process.env.AGENT_ID || 'unknown', to: peer, payload, ts: Date.now() };
-  const { stdout } = await execFileP(AXL_BIN, ['send', '--socket', AXL_SOCKET, '--to', peer, '--payload', JSON.stringify(msg)]).catch(() => ({ stdout: '' }));
-  if (stdout) console.log('[axl] sent:', stdout.trim());
-}
+// ---------------------------------------------------------------------------
+// axlSend — POST /send to the local AXL node
+// ---------------------------------------------------------------------------
 
-export async function axlReceive(agentId: string, timeoutMs = 5000): Promise<AxlMessage | null> {
-  // TODO Day-1: replace with actual axl CLI read loop — stub returns null after timeout
-  try {
-    const { stdout } = await Promise.race([
-      execFileP(AXL_BIN, ['receive', '--socket', AXL_SOCKET, '--as', agentId]),
-      new Promise<{ stdout: string }>((_, rej) => setTimeout(() => rej(new Error('timeout')), timeoutMs)),
-    ]);
-    return JSON.parse(stdout) as AxlMessage;
-  } catch {
-    return null;
+/**
+ * Send a JSON-serialisable payload to a named peer.
+ *
+ * @param peer    Peer ID as returned by /topology (or the logical agent name
+ *                used in AXL peer config, e.g. "judge").
+ * @param payload Any JSON-serialisable value. Will be stringified.
+ *
+ * Scale note: at 14 wallets the naive one-shot send is fine. For >1 K peers
+ * a batched /broadcast or publish-subscribe channel would replace this.
+ */
+export async function axlSend(peer: string, payload: unknown): Promise<void> {
+  const body = JSON.stringify({ to: peer, data: JSON.stringify(payload) });
+  const res = await fetch(`${AXL_HTTP_BASE}/send`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`axlSend failed: ${res.status} ${text}`);
   }
 }
 
-export async function axlVerify(msg: AxlMessage): Promise<boolean> {
-  // TODO Day-1: ed25519 signature verify via axl binary
-  return Boolean(msg.signature);
+// ---------------------------------------------------------------------------
+// axlRecv — GET /recv from the local AXL node
+// ---------------------------------------------------------------------------
+
+/**
+ * Pull all inbound messages queued by the AXL node for this agent.
+ * Returns an empty array when the queue is empty (not an error).
+ *
+ * Callers are expected to poll this in a loop, e.g. every 500-1000 ms.
+ * The AXL node delivers messages in FIFO order and clears them on read.
+ */
+export async function axlRecv(): Promise<AxlEnvelope[]> {
+  const res = await fetch(`${AXL_HTTP_BASE}/recv`);
+  if (!res.ok) {
+    // 404 during node startup — treat as empty, don't crash the poll loop
+    if (res.status === 404) return [];
+    throw new Error(`axlRecv failed: ${res.status}`);
+  }
+  const json = (await res.json()) as { messages?: AxlEnvelope[] };
+  return json.messages ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// axlTopology — GET /topology (diagnostic)
+// ---------------------------------------------------------------------------
+
+export interface AxlPeer {
+  id: string;
+  address?: string;
+}
+
+export async function axlTopology(): Promise<AxlPeer[]> {
+  const res = await fetch(`${AXL_HTTP_BASE}/topology`);
+  if (!res.ok) return [];
+  const json = (await res.json()) as { peers?: AxlPeer[] };
+  return json.peers ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// Legacy compat shim — Day-1 callers used axlReceive(agentId)
+// Deprecated: use axlRecv() and filter client-side if needed.
+// ---------------------------------------------------------------------------
+
+export async function axlReceive(_agentId?: string): Promise<AxlEnvelope | null> {
+  const msgs = await axlRecv().catch(() => []);
+  return msgs[0] ?? null;
 }
