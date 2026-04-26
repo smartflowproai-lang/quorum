@@ -118,4 +118,20 @@ Pre-existing leak in `main` (`SCOPE.md` lines 107/138/147/173/180 + `AUDIT-SCHED
 
 VPS state at this pass: 39G free disk, 3.1G free RAM, node v22.22.0, claude CLI present.
 
+## Fourth-pass verification — 2026-04-27 ~21:47 UTC (autonomous re-invocation)
+
+Brief re-fired a fourth time by the 15-min cron loop. Same defensive sweep, zero new code, zero new commits to feature branches.
+
+| Branch | local SHA = origin SHA | tsc | tests | banned phrases |
+|---|---|---|---|---|
+| `d5-verifier-extended` | `47ec9b8` ✓ | clean | 38/38 | n/a |
+| `treasurer-integration-tests` | `60657e4` ✓ | clean | 7/7 | n/a |
+| `d4-treasurer-edge-cases` | `f9cf8c0` ✓ | clean | 13 + 41 = 54/54 | n/a |
+| `submission-writeup-polish` | `2c86fe0` ✓ | n/a | n/a | clean |
+| `feedback-uniswap-draft` | `d6178a5` ✓ | n/a | n/a | clean |
+
+Open action items (unchanged from waves 1–3): 5 PRs need manual github.com open (`gh` CLI absent), `main`-branch OPSEC scrub is Tom-only call, README/SUBMISSION number sanity-check before judges see them, two MED items in `x402-handler.ts` flagged on Day 4 still pending Tom's review.
+
+VPS state at this pass: 39G free disk, 4.1G free RAM, node v22.22.0, claude CLI present.
+
 — Tom Smart
