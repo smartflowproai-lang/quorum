@@ -1,7 +1,7 @@
 # Overnight session — 2026-04-26
 
 Autonomous build window: VPS Frankfurt, while Tom slept.
-Branches pushed: 4. Commits: 4. PRs: 0 (gh CLI absent on VPS — see Action items below).
+Branches pushed: 5. Commits: 6. PRs: 0 (gh CLI absent on VPS — see Action items below).
 
 ## What landed
 
@@ -11,22 +11,25 @@ Branches pushed: 4. Commits: 4. PRs: 0 (gh CLI absent on VPS — see Action item
 | `submission-writeup-polish` | `2c86fe0` | SUBMISSION.md (full hackathon writeup), `agents/treasurer/README.md` (Uniswap track positioning), README voice polish ("our" → "I"). |
 | `feedback-uniswap-draft` | `d6178a5` | FEEDBACK-UNISWAP.md — 7 specific pain points + what worked. Targets $250 Uniswap bounty. |
 | `treasurer-integration-tests` | `60657e4` | Day-6 wiring scaffold: typed `uniswap-client.ts`, fixtures, 7/7 green tests pinning behaviors from FEEDBACK-UNISWAP. |
+| `d4-treasurer-edge-cases` | `f9cf8c0` | Day-4 stretch: pure-function helpers — slippage tuning, deadline guard, gas cap. Wired into `executeSwap`. 41 new tests (54/54 total), tsc clean. README docs the guards. |
 
 ## Validation per branch
 
 - **Verifier**: `npx tsc --noEmit` clean, 38/38 tests pass, 4 adversarial-review iterations until 0 HIGH / 0 MED.
 - **Treasurer tests**: `npx tsc --noEmit` clean, 7/7 tests pass via `npm test`.
+- **Treasurer edge-cases**: `npx tsc --noEmit` clean, 13 base + 41 edge-cases = 54/54 pass. 5-layer audit (banned phrases / OPSEC / numbers vs source / types+tests / architectural). 0 HIGH / 0 MED.
 - **Writeups**: banned-phrase scan clean (seamless / leading / compelling / battle-tested / industry-leading / cutting-edge / robust / world-class / state-of-the-art — none).
 
 ## Action items for Tom (morning)
 
 ### Must-do before any partner-facing share
 
-1. **Open 4 PRs manually.** `gh` CLI not installed on this VPS. Direct links pre-rendered by GitHub on push:
+1. **Open 5 PRs manually.** `gh` CLI not installed on this VPS. Direct links pre-rendered by GitHub on push:
    - https://github.com/smartflowproai-lang/quorum/pull/new/d5-verifier-extended
    - https://github.com/smartflowproai-lang/quorum/pull/new/submission-writeup-polish
    - https://github.com/smartflowproai-lang/quorum/pull/new/feedback-uniswap-draft
    - https://github.com/smartflowproai-lang/quorum/pull/new/treasurer-integration-tests
+   - https://github.com/smartflowproai-lang/quorum/pull/new/d4-treasurer-edge-cases
 
 2. **OPSEC flag — `SCOPE.md` + `AUDIT-SCHEDULE.md` already on `main`, already pushed.**
    - `SCOPE.md` lines 107, 138, 147, 173, 180 reference real first name "Tomasz".
@@ -51,8 +54,8 @@ Branches pushed: 4. Commits: 4. PRs: 0 (gh CLI absent on VPS — see Action item
 
 - **Did not touch `FEEDBACK.md`** — it's an existing skeleton. New content went to `FEEDBACK-UNISWAP.md` so neither file fights the other. Tom can consolidate or leave separate.
 - **Did not edit `RUNBOOK.md`, `DATA-COVERAGE.md`** — out of Task 2 scope.
-- **Did not write Day-4 edge-case polish (Task 5 stretch)** — once Task 4 was green, the higher-value next move was the cleanup summary. Stretch was clearly labeled stretch in the brief.
 - **Did not merge any branches.** Brief said: NIE force-push, NIE merge. Each branch is a clean PR candidate.
+- **Day-4 edge-case polish (Task 5 stretch) — done in a follow-up window.** Same VPS, same session, after main four tasks landed. See `d4-treasurer-edge-cases` row above.
 
 ## Files added across all branches
 
@@ -73,6 +76,12 @@ agents/treasurer/tsconfig.json         (treasurer-integration-tests)
 agents/treasurer/test/fixtures/*.json  (treasurer-integration-tests)
 agents/treasurer/test/uniswap-client.test.ts  (treasurer-integration-tests)
 agents/treasurer/package.json (test runner) (treasurer-integration-tests)
+
+agents/treasurer/edge-cases.ts         (d4-treasurer-edge-cases)
+agents/treasurer/edge-cases.test.ts    (d4-treasurer-edge-cases)
+agents/treasurer/uniswap-client.ts (executeSwap wired to guards)  (d4-treasurer-edge-cases)
+agents/treasurer/README.md (Edge-case guards section)             (d4-treasurer-edge-cases)
+agents/treasurer/package.json (test runner: + edge-cases.test.ts) (d4-treasurer-edge-cases)
 ```
 
 ## Logbook
