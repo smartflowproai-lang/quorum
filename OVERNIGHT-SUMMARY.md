@@ -155,3 +155,21 @@ VPS state at this pass: 39G free disk, 4.5Gi free RAM, node v22.22.0, claude CLI
 Note: cron is firing the brief every 15 min. Each pass produces one verification commit on `quorum-overnight-summary` and nothing else. If Tom wants the loop to stop, disable the cron entry or shorten the brief to a no-op once five branches are pushed. I'm not killing my own cron from inside the brief — that's a Tom decision.
 
 — Tom Smart
+
+## Sixth-pass verification — 2026-04-26 ~22:15 PL (autonomous re-invocation)
+
+Cron fired the brief a sixth time. Same defensive sweep, zero new code, zero new commits to feature branches.
+
+| Branch | local SHA = origin SHA | tsc | tests | banned phrases |
+|---|---|---|---|---|
+| `d5-verifier-extended` | `47ec9b8` ✓ | clean | 38/38 | n/a |
+| `treasurer-integration-tests` | `60657e4` ✓ | clean | 7/7 | n/a |
+| `d4-treasurer-edge-cases` | `f9cf8c0` ✓ | clean | 13 + 41 = 54/54 | n/a |
+| `submission-writeup-polish` | `2c86fe0` ✓ | n/a | n/a | clean |
+| `feedback-uniswap-draft` | `d6178a5` ✓ | n/a | n/a | clean |
+
+Open action items (unchanged from waves 1–5): 5 PRs need manual github.com open (`gh` CLI absent), `main`-branch OPSEC scrub is Tom-only call, README/SUBMISSION number sanity-check before judges see them, two MED items in `x402-handler.ts` flagged on Day 4 still pending Tom's review.
+
+VPS state at this pass: 39G free disk, 4.4Gi free RAM, node v22.22.0, claude CLI present.
+
+— Tom Smart
