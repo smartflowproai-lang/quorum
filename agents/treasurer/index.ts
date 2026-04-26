@@ -33,10 +33,32 @@
 //   4. Add AXL poll loop (see scout/index.ts for pattern)
 //   5. Integrate KeeperHub job scheduling (agents/treasurer/keeper-scheduler.ts)
 
+import {
+  createPublicClient,
+  http,
+  parseAbi,
+  formatUnits,
+  type Hex,
+} from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { base } from 'viem/chains';
+
 import { axlSend, axlRecv } from '../../shared/axl-wrap';
 import type { AxlEnvelope } from '../../shared/axl-wrap';
 import { UniswapClient } from './uniswap-client';
 import { X402Handler } from './x402-handler';
+
+const ERC20_ABI_MIN = parseAbi([
+  'function balanceOf(address owner) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+]);
+
+const TOKEN_META: ReadonlyArray<{ symbol: keyof typeof TOKENS; decimals: number }> = [
+  { symbol: 'USDC', decimals: 6 },
+  { symbol: 'WETH', decimals: 18 },
+  { symbol: 'VIRTUAL', decimals: 18 },
+];
 
 // ---------------------------------------------------------------------------
 // Shared constants (Base mainnet)
@@ -129,35 +151,72 @@ export class Treasurer {
 
   /**
    * Returns current token balances for all tracked agent wallets.
-   *
-   * TODO Day 4:
-   *   1. Build viem publicClient on Base mainnet.
-   *   2. For each WATCHED_ADDRESSES, call readContract balanceOf for each TOKENS entry.
-   *   3. Format with viem formatUnits().
+   * Reads balanceOf for each TOKENS entry per watched address via Base public RPC.
    */
   async getBalances(): Promise<Map<Address, TokenBalance[]>> {
     const result = new Map<Address, TokenBalance[]>();
     const watched = this.getWatchedAddresses();
+    if (watched.length === 0) return result;
+
+    const rpcUrl = process.env.BASE_RPC_URL ?? 'https://base.publicnode.com';
+    const publicClient = createPublicClient({
+      chain: base,
+      transport: http(rpcUrl),
+    });
+
     for (const addr of watched) {
-      result.set(addr, []);
+      const balances: TokenBalance[] = [];
+      for (const meta of TOKEN_META) {
+        const tokenAddress = TOKENS[meta.symbol] as Address;
+        try {
+          const raw = (await publicClient.readContract({
+            address: tokenAddress,
+            abi: ERC20_ABI_MIN,
+            functionName: 'balanceOf',
+            args: [addr],
+          })) as bigint;
+          balances.push({
+            tokenAddress,
+            symbol: meta.symbol,
+            decimals: meta.decimals,
+            rawAmount: raw.toString(),
+            formattedAmount: formatUnits(raw, meta.decimals),
+          });
+        } catch (e) {
+          console.warn(
+            `[${AGENT_ID}] balanceOf failed addr=${addr.slice(0, 8)} ${meta.symbol}: ${
+              e instanceof Error ? e.message : String(e)
+            }`
+          );
+        }
+      }
+      result.set(addr, balances);
     }
     return result;
   }
 
   /**
-   * Executes a rebalancing swap between two agent wallets.
-   *
-   * TODO Day 4:
-   *   1. Validate plan (amountIn > 0, fromAddress has balance).
-   *   2. Call this.uniswap.getQuote(tokenIn, tokenOut, amountIn, BASE_CHAIN_ID).
-   *   3. Sign Permit2 from quote.permitData.
-   *   4. Call this.uniswap.executeSwap(signedQuote, this.signerPrivateKey).
+   * Executes a rebalancing swap. Validates the plan, then runs
+   * UniswapClient.swap() (getQuote → signPermit2 → executeSwap).
+   * Returns array with one TxReceipt for the swap (or empty if swap was a no-op).
    */
   async rebalance(plan: RebalancePlan): Promise<TxReceipt[]> {
-    console.log(`[${AGENT_ID}] rebalance: ${plan.fromAddress.slice(0, 8)} reason="${plan.reason}"`);
-    const receipts: TxReceipt[] = [];
-    // TODO: wire to UniswapClient
-    return receipts;
+    console.log(
+      `[${AGENT_ID}] rebalance: ${plan.fromAddress.slice(0, 8)} reason="${plan.reason}"`
+    );
+    if (BigInt(plan.amountIn) <= 0n) {
+      console.warn(`[${AGENT_ID}] rebalance skipped: amountIn=${plan.amountIn} not > 0`);
+      return [];
+    }
+
+    const { receipt } = await this.uniswap.swap(
+      plan.tokenIn,
+      plan.tokenOut,
+      plan.amountIn,
+      this.signerPrivateKey,
+      BASE_CHAIN_ID
+    );
+    return [receipt];
   }
 
   /**
@@ -262,7 +321,10 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Only run main() when this file is executed directly (not when imported by tests)
+if (require.main === module) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
