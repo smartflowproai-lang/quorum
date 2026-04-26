@@ -88,4 +88,18 @@ agents/treasurer/package.json (test runner: + edge-cases.test.ts) (d4-treasurer-
 
 Live progress log appended to `/root/quorum-overnight.log` on the VPS during the session.
 
+## Second-pass verification — 2026-04-27 (autonomous re-invocation)
+
+Re-invoked overnight engine ran a defensive verification sweep on every pushed branch. No new code added; just confirming the work survives re-checkout and `npm install` state on the VPS.
+
+| Branch | tsc | tests | OPSEC / banned phrases |
+|---|---|---|---|
+| `d5-verifier-extended` | clean | 38/38 | n/a (code, not prose) |
+| `treasurer-integration-tests` | clean | 7/7 | n/a |
+| `d4-treasurer-edge-cases` | clean | 13 base + 41 edge = 54/54 | n/a |
+| `submission-writeup-polish` | n/a (docs) | n/a | clean (no `seamless\|leading\|compelling\|battle-tested\|industry-leading\|cutting-edge\|world-class\|state-of-the-art\|Tomasz\|Śliwiński\|PQS\|stroke\|udar\|rehab` in `README.md\|SUBMISSION.md\|agents/treasurer/README.md`) |
+| `feedback-uniswap-draft` | n/a (docs) | n/a | clean (same scan against `FEEDBACK-UNISWAP.md`) |
+
+Action items from the morning section (PR opening, OPSEC scrub on `main`, number sanity-check) are still open — those need Tom. Re-invocation deliberately did not act on them: PR creation needs human auth on github.com because `gh` is absent, and the `main`-branch OPSEC scrub is the kind of decision the original summary explicitly flagged as Tom-only.
+
 — Tom Smart
