@@ -102,4 +102,20 @@ Re-invoked overnight engine ran a defensive verification sweep on every pushed b
 
 Action items from the morning section (PR opening, OPSEC scrub on `main`, number sanity-check) are still open — those need Tom. Re-invocation deliberately did not act on them: PR creation needs human auth on github.com because `gh` is absent, and the `main`-branch OPSEC scrub is the kind of decision the original summary explicitly flagged as Tom-only.
 
+## Third-pass verification — 2026-04-27 (later autonomous re-invocation)
+
+Brief re-invoked a third time same night. Same verification sweep, no new code, no new commits to feature branches. Goal: confirm nothing decayed between passes (file-system state, npm cache, branch checkout).
+
+| Branch | tsc | tests | OPSEC / banned phrases |
+|---|---|---|---|
+| `d5-verifier-extended` | clean | 38/38 | n/a |
+| `treasurer-integration-tests` | clean | 7/7 | n/a |
+| `d4-treasurer-edge-cases` | clean | 13 + 41 = 54/54 | n/a |
+| `submission-writeup-polish` | n/a | n/a | clean across all `*.md` (no banned phrases, no real-name / health / PQS leaks in branch-added files) |
+| `feedback-uniswap-draft` | n/a | n/a | clean (`FEEDBACK-UNISWAP.md`) |
+
+Pre-existing leak in `main` (`SCOPE.md` lines 107/138/147/173/180 + `AUDIT-SCHEDULE.md` line 77) re-confirmed and re-flagged. Origin: commit `f88d54d` (Day-1 infra), not introduced by any overnight branch. Decision still on Tom: scrub commit (history leak remains) vs leave (casual readers see it).
+
+VPS state at this pass: 39G free disk, 3.1G free RAM, node v22.22.0, claude CLI present.
+
 — Tom Smart
