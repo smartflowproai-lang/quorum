@@ -88,11 +88,28 @@ cp .env.example .env
 #   TREASURER_WALLET_ADDRESS — corresponding 0x address
 #   WATCHED_ADDRESSES   — comma-separated agent wallet addresses to monitor
 #   BASE_RPC_URL        — e.g. https://mainnet.base.org
+#
+# Optional (Day 4 edge-case guards — see edge-cases.ts):
+#   GAS_ABORT_THRESHOLD_WEI — pre-broadcast gas-cost ceiling in wei.
+#                             Default 1_000_000_000_000_000 (0.001 ETH).
+#                             executeSwap throws if gasLimit*maxFeePerGas
+#                             would exceed this. Override only when you
+#                             actually need to pay more.
 
 npm install
 npm run build
 npm start
 ```
+
+### Edge-case guards (executeSwap)
+
+The Day 4 stretch added three pre-broadcast guards in `edge-cases.ts`:
+
+- **Per-pair slippage default** — `getSlippageForPair()`: stable/stable 0.1%, stable+blue-chip or blue-chip pair 0.5%, anything volatile (e.g. VIRTUAL) 1.0%. `getQuote()` accepts an explicit `slippageOverride` if the caller wants to force a value.
+- **Quote freshness** — `extractQuoteDeadline()` searches both `quote.deadline` and `permitData.values.deadline`, normalises ms→s, and rejects implausibly far-future values. `assertQuoteFresh()` then throws when fewer than 30 s remain (configurable via `QUOTE_DEADLINE_BUFFER_SEC`).
+- **Gas cost cap** — `selectGasLimit()` always takes `max(localEstimate, apiHint)` and caps at 2,000,000 (`ABSOLUTE_GAS_LIMIT_CEILING`) so a hostile `/v1/swap` response cannot lower the limit. `assertGasCostBelowThreshold()` then validates `gasLimit * maxFeePerGas` against `GAS_ABORT_THRESHOLD_WEI`.
+
+The same `maxFeePerGas` and `maxPriorityFeePerGas` we asserted are passed explicitly to `walletClient.sendTransaction`, so the broadcast cost ceiling is the asserted ceiling.
 
 ---
 
