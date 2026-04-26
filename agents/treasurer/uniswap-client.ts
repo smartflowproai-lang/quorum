@@ -17,12 +17,20 @@ import {
   createWalletClient,
   createPublicClient,
   http,
+  isAddress,
   type Hex,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 
 import type { Address, TxReceipt } from './index';
+import {
+  getSlippageForPair,
+  assertQuoteFresh,
+  extractQuoteDeadline,
+  assertGasCostBelowThreshold,
+  selectGasLimit,
+} from './edge-cases';
 
 // ---------------------------------------------------------------------------
 // Types — Uniswap Trading API shapes
@@ -127,6 +135,23 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// Strict integer-string parser. Accepts decimal or hex; rejects scientific
+// notation, decimals, and other tricks that BigInt would silently mishandle
+// or throw a generic SyntaxError on.
+const INTEGER_LIKE_RE = /^(?:0x[0-9a-fA-F]+|\d+)$/;
+
+function parseIntegerLike(
+  raw: string | undefined,
+  context: string,
+  fallback: bigint | null
+): bigint | null {
+  if (raw === undefined) return fallback;
+  if (typeof raw !== 'string' || !INTEGER_LIKE_RE.test(raw)) {
+    throw new Error(`Uniswap response: ${context} is not an integer-like string: ${String(raw)}`);
+  }
+  return BigInt(raw);
+}
+
 // ---------------------------------------------------------------------------
 // UniswapClient
 // ---------------------------------------------------------------------------
@@ -165,7 +190,8 @@ export class UniswapClient {
     tokenOut: Address,
     amountIn: string,
     chainId: number = 8453,
-    swapperOverride?: Address
+    swapperOverride?: Address,
+    slippageOverride?: number
   ): Promise<QuoteResponse> {
     if (!this.apiKey) {
       throw new Error('UniswapClient.getQuote: UNISWAP_API_KEY env var is required');
@@ -173,11 +199,24 @@ export class UniswapClient {
 
     const swapper = swapperOverride
       ?? (process.env.TREASURER_WALLET_ADDRESS as Address | undefined);
-    if (!swapper || !/^0x[0-9a-fA-F]{40}$/.test(swapper)) {
+    if (!swapper || !isAddress(swapper)) {
       throw new Error(
-        'UniswapClient.getQuote: TREASURER_WALLET_ADDRESS env var is required (or pass swapperOverride)'
+        'UniswapClient.getQuote: TREASURER_WALLET_ADDRESS env var is required and must be a valid 0x EVM address (or pass swapperOverride)'
       );
     }
+
+    if (!isAddress(tokenIn) || !isAddress(tokenOut)) {
+      throw new Error(
+        `UniswapClient.getQuote: tokenIn / tokenOut must be valid 0x EVM addresses (got ${tokenIn} / ${tokenOut})`
+      );
+    }
+    if (tokenIn.toLowerCase() === tokenOut.toLowerCase()) {
+      throw new Error(
+        `UniswapClient.getQuote: tokenIn and tokenOut are identical (${tokenIn}) — refusing self-swap`
+      );
+    }
+
+    const slippageTolerance = slippageOverride ?? getSlippageForPair(tokenIn, tokenOut);
 
     const requestBody: QuoteRequest = {
       type: 'EXACT_INPUT',
@@ -187,7 +226,7 @@ export class UniswapClient {
       tokenIn,
       tokenOut,
       swapper,
-      slippageTolerance: 0.5,
+      slippageTolerance,
       routingPreference: 'BEST_PRICE',
       // V3 + V4 only — UniswapX is async/off-chain, bad for live demos
       protocols: ['V3', 'V4'],
@@ -208,9 +247,22 @@ export class UniswapClient {
     }
 
     const json = (await res.json()) as QuoteResponse;
-    if (!json.quote || !json.quote.amountOut || BigInt(json.quote.amountOut) <= 0n) {
+    if (!json.quote || !json.quote.amountOut) {
       throw new Error(
         `Uniswap /quote returned invalid quote (amountOut=${json.quote?.amountOut})`
+      );
+    }
+    let amountOutBn: bigint;
+    try {
+      amountOutBn = BigInt(json.quote.amountOut);
+    } catch {
+      throw new Error(
+        `Uniswap /quote returned non-integer amountOut: ${String(json.quote.amountOut)}`
+      );
+    }
+    if (amountOutBn <= 0n) {
+      throw new Error(
+        `Uniswap /quote returned non-positive amountOut: ${json.quote.amountOut}`
       );
     }
     return json;
@@ -290,6 +342,15 @@ export class UniswapClient {
       throw new Error('UniswapClient.executeSwap: UNISWAP_API_KEY env var is required');
     }
 
+    // Edge case: reject if the quote is already past its broadcast window.
+    // Trading API has been observed to expose this in two places —
+    // `quote.deadline` and `permitData.values.deadline` — sometimes in
+    // milliseconds. extractQuoteDeadline normalises both into seconds.
+    // assertQuoteFresh returns null when nothing is set (skip rather than
+    // fail-closed on a missing field).
+    const quoteDeadline = extractQuoteDeadline(signedQuote.quoteResponse);
+    assertQuoteFresh(quoteDeadline);
+
     // Step 1: POST /v1/swap to get calldata
     const swapBody: SwapRequest = {
       quote: signedQuote.quoteResponse.quote,
@@ -331,10 +392,54 @@ export class UniswapClient {
       transport: http(this.rpcUrl),
     });
 
+    // Edge case: pre-broadcast gas budget check.
+    //
+    // Don't trust `swapData.swap.gasLimit` alone — a malicious or stale /v1/swap
+    // response could echo back `gasLimit: 1` to make the cost-check pass while
+    // viem re-estimates and pays real cost at broadcast time. Pattern:
+    //   1. Run our own estimateGas locally.
+    //   2. Take max(local, hinted), capped at ABSOLUTE_GAS_LIMIT_CEILING.
+    //   3. Sample EIP-1559 fees once and pass them explicitly to sendTransaction
+    //      so the same numbers we asserted are the ones broadcast.
+    //   4. Validate gasLimit * maxFeePerGas against the operator budget.
+    // Fallback 0n means parseIntegerLike never returns null here.
+    const txValue = parseIntegerLike(swapData.swap.value, 'swap.value', 0n) as bigint;
+    let localEstimate: bigint;
+    try {
+      localEstimate = await publicClient.estimateGas({
+        account: account.address,
+        to: swapData.swap.to,
+        data: swapData.swap.data,
+        value: txValue,
+      });
+    } catch (e) {
+      // estimateGas failures here typically mean a stale Permit2 nonce, an
+      // expired permit, or an unexpected revert in routing. Surface that
+      // context instead of letting viem's generic error bubble up.
+      throw new Error(
+        `executeSwap: gas estimation failed (quote may be stale or permit expired): ${
+          e instanceof Error ? e.message : String(e)
+        }`
+      );
+    }
+    const apiHint = swapData.swap.gasLimit
+      ? parseIntegerLike(swapData.swap.gasLimit, 'swap.gasLimit', null)
+      : null;
+    const gasLimit = selectGasLimit(localEstimate, apiHint);
+    const fees = await publicClient.estimateFeesPerGas();
+    // assertGasCostBelowThreshold uses gasLimit * maxFeePerGas, which IS the
+    // EIP-1559 worst-case the wallet can pay (effective_gas_price <= maxFee).
+    // Passing maxFeePerGas + maxPriorityFeePerGas explicitly to sendTransaction
+    // below pins those caps for the broadcast.
+    assertGasCostBelowThreshold(gasLimit, fees.maxFeePerGas);
+
     const txHash = await walletClient.sendTransaction({
       to: swapData.swap.to,
       data: swapData.swap.data,
-      value: BigInt(swapData.swap.value ?? '0'),
+      value: txValue,
+      gas: gasLimit,
+      maxFeePerGas: fees.maxFeePerGas,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
     });
 
     // Step 4: wait for receipt (default timeout ~30s for Base)
@@ -365,10 +470,18 @@ export class UniswapClient {
     tokenOut: Address,
     amountIn: string,
     signerPrivateKey: Hex,
-    chainId: number = 8453
+    chainId: number = 8453,
+    slippageOverride?: number
   ): Promise<{ quote: QuoteResponse; receipt: TxReceipt }> {
     const swapper = privateKeyToAccount(signerPrivateKey).address as Address;
-    const quote = await this.getQuote(tokenIn, tokenOut, amountIn, chainId, swapper);
+    const quote = await this.getQuote(
+      tokenIn,
+      tokenOut,
+      amountIn,
+      chainId,
+      swapper,
+      slippageOverride
+    );
 
     if (!quote.permitData) {
       throw new Error('UniswapClient.swap: quote response has no permitData (cannot sign)');
