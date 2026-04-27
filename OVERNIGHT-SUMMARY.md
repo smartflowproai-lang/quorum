@@ -449,5 +449,25 @@ Open action items (unchanged from waves 1–23): 5 PRs need manual github.com op
 
 VPS state at this pass: 29G free disk, 4.9Gi available RAM, load 2.20/1.63/1.53, node v22.22.0. Past the 02:00 UTC soft hard-stop; cron keeps sweeping every 15 min until Tom disables it. Zero drift across 24 consecutive passes.
 
+## Wave 26 — 2026-04-27 03:18 UTC
+
+Cron fired the brief a twenty-sixth time. Defensive verification only — zero new commits to feature branches, zero new code.
+
+| Branch | local SHA = origin SHA | tests | banned phrases |
+|---|---|---|---|
+| `d5-verifier-extended` | `47ec9b8` ✓ | 38/38 | n/a |
+| `treasurer-integration-tests` | `60657e4` ✓ | 7/7 (`test/uniswap-client.test.ts`) | n/a |
+| `d4-treasurer-edge-cases` | `f9cf8c0` ✓ | 13 + 41 = 54/54 (`treasurer.test.ts`, `edge-cases.test.ts`) | n/a |
+| `submission-writeup-polish` | `2c86fe0` ✓ | n/a | 0 hits in SUBMISSION.md, README.md, agents/treasurer/README.md |
+| `feedback-uniswap-draft` | `d6178a5` ✓ | n/a | 0 hits in FEEDBACK-UNISWAP.md |
+
+Total 99/99 tests green across the three code branches. Five SHAs identical to wave 25 — origin untouched.
+
+OPSEC scan on doc branches found 2 hits each in `AUDIT-SCHEDULE.md` + `SCOPE.md` — same pre-existing condition as every prior wave: those files describe the stealth rules themselves (they live on `main` and rode along on the doc branches). Tom-only call to scrub.
+
+Open action items (unchanged since wave 1): 5 PRs need manual open on github.com (no `gh` CLI on VPS), `main`-branch OPSEC scrub is Tom's call, README/SUBMISSION number sanity-check before judges, two MED items in `x402-handler.ts` from Day 4 still pending Tom's review, cron at `*/15` keeps firing until Tom edits crontab.
+
+VPS state at this pass: 28G free disk (used crept from 26G→27G across the 26 waves of npm caches in `/tmp` clones — within budget), 4.8Gi available RAM, load 1.45/1.55/1.45, node v22.22.0. Past the 02:00 UTC hard-stop by ~80 min. Zero drift across 26 consecutive passes.
+
 — Tom Smart
 
