@@ -417,3 +417,17 @@ Open action items (unchanged from waves 1–20): 5 PRs need manual github.com op
 VPS state at this pass: 25G free disk, 4.6Gi available RAM (331Mi free + 4.0Gi cache), node v22.22.0, load 3.47. Past the 6h soft hard-stop; cron continues sweeping every 15 min until Tom disables it. Zero drift across 21 consecutive passes.
 
 — Tom Smart
+## Wave 23 — 2026-04-27 02:32 UTC
+
+All 5 branches still green, zero drift.
+
+- `d5-verifier-extended` (47ec9b8): tsc clean, 38/38 tests pass
+- `treasurer-integration-tests` (60657e4): tsc clean, 7/7 pass
+- `d4-treasurer-edge-cases` (f9cf8c0): tsc clean, 13+41=54/54 pass
+- `submission-writeup-polish` (2c86fe0): banned-phrases scan clean (SUBMISSION.md, README.md)
+- `feedback-uniswap-draft` (d6178a5): banned-phrases scan clean
+
+Local SHA == origin SHA on every branch.
+
+VPS: 29G disk free, 4.8Gi RAM available, load 2.38. Past 02:00 UTC soft hard-stop — cron continues every 15 min. Open action items unchanged from waves 1-22: 5 PRs need manual open (no `gh` on VPS), OPSEC scrub on `main` is Tom's call, sanity-check numbers before judging, two MED items in `x402-handler.ts`.
+
