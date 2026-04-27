@@ -62,3 +62,6 @@ demo/*.mov
 
 # CI artefacts
 .github/workflows/*.log
+
+# Internal planning docs (OPSEC)
+.private/
