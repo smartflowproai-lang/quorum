@@ -397,3 +397,23 @@ Open action items (unchanged from waves 1–19): 5 PRs need manual github.com op
 VPS state at this pass: 30G free disk, 5.4Gi available RAM (516Mi free + 5.2Gi cache), node v22.22.0, load 4.31. Past the 6h soft hard-stop; cron continues sweeping every 15 min until Tom disables it. Zero drift across 20 consecutive passes.
 
 — Tom Smart
+
+## Twenty-first-pass verification — 2026-04-27 ~02:02 UTC (autonomous re-invocation)
+
+Cron fired the brief a twenty-first time. Same defensive sweep, zero new code, zero new commits to feature branches.
+
+| Branch | local SHA = origin SHA | tsc | tests | banned phrases |
+|---|---|---|---|---|
+| `d5-verifier-extended` | `47ec9b8` ✓ | clean | 38/38 | n/a |
+| `treasurer-integration-tests` | `60657e4` ✓ | clean | 7/7 | n/a |
+| `d4-treasurer-edge-cases` | `f9cf8c0` ✓ | clean | 13 + 41 = 54/54 | n/a |
+| `submission-writeup-polish` | `2c86fe0` ✓ | n/a | n/a | clean |
+| `feedback-uniswap-draft` | `d6178a5` ✓ | n/a | n/a | clean |
+
+Total 99/99 tests green across the three code branches. All five SHAs identical to wave 20 — origin untouched.
+
+Open action items (unchanged from waves 1–20): 5 PRs need manual github.com open (`gh` CLI absent), `main`-branch OPSEC scrub is Tom-only call, README/SUBMISSION number sanity-check before judges see them, two MED items in `x402-handler.ts` flagged on Day 4 still pending Tom's review.
+
+VPS state at this pass: 25G free disk, 4.6Gi available RAM (331Mi free + 4.0Gi cache), node v22.22.0, load 3.47. Past the 6h soft hard-stop; cron continues sweeping every 15 min until Tom disables it. Zero drift across 21 consecutive passes.
+
+— Tom Smart
