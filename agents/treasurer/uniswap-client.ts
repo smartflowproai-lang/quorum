@@ -1,135 +1,386 @@
-// Uniswap Trading API client — Day-6 wiring scaffold.
+// uniswap-client.ts — Uniswap Trading API wrapper (Day 4 implementation)
 //
-// This module is the boundary between Treasurer's float-management logic
-// and the Uniswap Trading API (`/v1/quote`, `/v1/swap`). The HTTP fetcher is
-// injected so tests can supply pre-recorded fixtures without hitting the live API.
+// Research source: openagents-sdk-research-2026-04-22.md §3.4
 //
-// Design intent (per FEEDBACK-UNISWAP.md learnings):
-//   * Quote freshness is enforced by the caller — we expose `quotedAt` so the
-//     caller can re-quote on retry rather than silently re-using a stale quote.
-//   * Permit2 `primaryType` is passed through verbatim — no positional fallback.
-//   * `chainId` is validated up-front so we don't get a 200 from /v1/quote on a
-//     chain we can't actually swap on.
+// Uniswap Trading API base: https://trade-api.gateway.uniswap.org/v1
+// Auth header: x-api-key: <UNISWAP_API_KEY>
+//
+// Flow:
+//   1. getQuote: POST /v1/quote → returns quote + permitData (Permit2 typed data)
+//   2. signPermit2: viem signTypedData on permitData → returns hex signature
+//   3. executeSwap: POST /v1/swap with signed permit → returns calldata → broadcast via viem
+//
+// Permit2 is non-optional — Universal Router pulls tokens via Permit2 signature
+// in a single tx (no separate approve()).
 
-import { z } from "zod";
+import {
+  createWalletClient,
+  createPublicClient,
+  http,
+  type Hex,
+} from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { base } from 'viem/chains';
 
-// Base mainnet only for QUORUM. Trading API quote endpoint accepts other
-// chainIds and returns 200, but /v1/swap rejects them. We refuse early.
-export const SUPPORTED_CHAINS = [8453] as const;
-export type SupportedChain = typeof SUPPORTED_CHAINS[number];
+import type { Address, TxReceipt } from './index';
 
-export const QuoteRequestSchema = z.object({
-  type: z.enum(["EXACT_INPUT", "EXACT_OUTPUT"]),
-  tokenIn: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  tokenOut: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  amount: z.string().regex(/^\d+$/), // wei, decimal string
-  tokenInChainId: z.number().int().positive(),
-  tokenOutChainId: z.number().int().positive(),
-  swapper: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  slippageTolerance: z.number().min(0).max(50).optional(),
-  // Documented default of /v1/quote includes UniswapX. We refuse to default
-  // implicitly — caller picks. See FEEDBACK-UNISWAP.md item #4.
-  protocols: z.array(z.enum(["V2", "V3", "V4", "UniswapX"])).min(1),
-}).strict();
+// ---------------------------------------------------------------------------
+// Types — Uniswap Trading API shapes
+// ---------------------------------------------------------------------------
 
-export type QuoteRequest = z.infer<typeof QuoteRequestSchema>;
-
-export const QuoteResponseSchema = z.object({
-  quote: z.object({
-    input: z.object({ token: z.string(), amount: z.string() }),
-    output: z.object({ token: z.string(), amount: z.string() }),
-    priceImpact: z.number(),
-    gasFeeUSD: z.string().optional(),
-  }),
-  permitData: z.object({
-    domain: z.record(z.unknown()),
-    types: z.record(z.unknown()),
-    primaryType: z.string(), // mandatory for QUORUM — see FEEDBACK item #1
-    message: z.record(z.unknown()),
-  }),
-  routing: z.enum(["CLASSIC", "UNISWAPX", "DUTCH_LIMIT", "DUTCH_V2"]),
-}).strict();
-
-export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;
-
-export interface FetchLike {
-  (url: string, init: { method: string; headers: Record<string, string>; body: string }): Promise<{
-    ok: boolean;
-    status: number;
-    json: () => Promise<unknown>;
-    text: () => Promise<string>;
-  }>;
+export interface QuoteRequest {
+  type: 'EXACT_INPUT' | 'EXACT_OUTPUT';
+  amount: string;
+  tokenInChainId: number;
+  tokenOutChainId: number;
+  tokenIn: Address;
+  tokenOut: Address;
+  swapper: Address;
+  slippageTolerance?: number;
+  routingPreference?: 'BEST_PRICE' | 'FASTEST';
+  protocols?: Array<'V2' | 'V3' | 'V4' | 'UNISWAPX_V2' | 'UNISWAPX_V3'>;
 }
 
-export interface UniswapClientOpts {
-  apiBase: string;
-  apiKey: string;
-  fetcher: FetchLike;
-  // Quote freshness budget — caller must re-quote past this. Default 30s.
-  quoteTtlMs?: number;
+export interface QuoteResponse {
+  requestId: string;
+  quote: {
+    amountIn: string;
+    amountOut: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  };
+  permitData?: {
+    domain: Record<string, unknown>;
+    types: Record<string, unknown>;
+    values: Record<string, unknown>;
+  };
+  routing: string;
 }
 
-export class StaleQuoteError extends Error {
-  constructor(ageMs: number, ttlMs: number) {
-    super(`quote stale: ${ageMs}ms > ${ttlMs}ms ttl`);
-    this.name = "StaleQuoteError";
+export interface SwapRequest {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  quote: any;
+  permitSignature: Hex;
+}
+
+export interface SwapResponse {
+  swap: {
+    to: Address;
+    data: Hex;
+    value?: string;
+    from?: Address;
+    gasLimit?: string;
+    chainId?: number;
+  };
+}
+
+export interface SignedQuote {
+  quoteResponse: QuoteResponse;
+  permitSignature: Hex;
+  swapper: Address;
+}
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+
+const UNISWAP_API_BASE = 'https://trade-api.gateway.uniswap.org/v1';
+const DEFAULT_TIMEOUT_MS = 15000;
+const MAX_RETRIES = 3;
+
+// ---------------------------------------------------------------------------
+// HTTP helper with retry + exponential backoff
+// ---------------------------------------------------------------------------
+
+async function httpRequestWithRetry(
+  url: string,
+  init: RequestInit,
+  retries: number = MAX_RETRIES
+): Promise<Response> {
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+      const res = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(t);
+      // 5xx → retry; 4xx → no retry (caller error)
+      if (res.status >= 500 && attempt < retries - 1) {
+        await sleep(2 ** attempt * 500);
+        continue;
+      }
+      return res;
+    } catch (e) {
+      lastErr = e;
+      if (attempt === retries - 1) break;
+      await sleep(2 ** attempt * 500);
+    }
   }
+  throw new Error(
+    `HTTP request failed after ${retries} attempts: ${
+      lastErr instanceof Error ? lastErr.message : String(lastErr)
+    }`
+  );
 }
 
-export class UnsupportedChainError extends Error {
-  constructor(chainId: number) {
-    super(`unsupported chainId ${chainId}; QUORUM accepts ${SUPPORTED_CHAINS.join(", ")}`);
-    this.name = "UnsupportedChainError";
-  }
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
-export class TradingApiError extends Error {
-  constructor(public status: number, public bodyText: string) {
-    super(`trading api status ${status}`);
-    this.name = "TradingApiError";
-  }
-}
+// ---------------------------------------------------------------------------
+// UniswapClient
+// ---------------------------------------------------------------------------
 
 export class UniswapClient {
-  private readonly opts: Required<UniswapClientOpts>;
-  constructor(opts: UniswapClientOpts) {
-    this.opts = { quoteTtlMs: 30_000, ...opts };
+  private readonly apiKey: string;
+  private readonly rpcUrl: string;
+
+  constructor() {
+    const key = process.env.UNISWAP_API_KEY;
+    if (!key) {
+      console.warn('[uniswap-client] UNISWAP_API_KEY not set — swap calls will fail');
+    }
+    this.apiKey = key ?? '';
+    this.rpcUrl = process.env.BASE_RPC_URL ?? 'https://base.publicnode.com';
   }
 
-  async quote(req: QuoteRequest): Promise<{ res: QuoteResponse; quotedAt: number }> {
-    QuoteRequestSchema.parse(req);
-    if (!SUPPORTED_CHAINS.includes(req.tokenInChainId as SupportedChain)) {
-      throw new UnsupportedChainError(req.tokenInChainId);
+  // -------------------------------------------------------------------------
+  // getQuote
+  // -------------------------------------------------------------------------
+
+  /**
+   * Fetches a swap quote from Uniswap Trading API.
+   *
+   * Endpoint: POST https://trade-api.gateway.uniswap.org/v1/quote
+   *
+   * Returns QuoteResponse with optional permitData. Caller must call
+   * signPermit2(quote.permitData, signerPrivateKey) before passing to executeSwap.
+   *
+   * Pitfall: Base chainId = 8453, NOT 84532 (that's Sepolia testnet).
+   *
+   * @throws Error on 4xx, network failure, or missing fields in response.
+   */
+  async getQuote(
+    tokenIn: Address,
+    tokenOut: Address,
+    amountIn: string,
+    chainId: number = 8453,
+    swapperOverride?: Address
+  ): Promise<QuoteResponse> {
+    if (!this.apiKey) {
+      throw new Error('UniswapClient.getQuote: UNISWAP_API_KEY env var is required');
     }
-    if (!SUPPORTED_CHAINS.includes(req.tokenOutChainId as SupportedChain)) {
-      throw new UnsupportedChainError(req.tokenOutChainId);
+
+    const swapper = swapperOverride
+      ?? (process.env.TREASURER_WALLET_ADDRESS as Address | undefined);
+    if (!swapper || !/^0x[0-9a-fA-F]{40}$/.test(swapper)) {
+      throw new Error(
+        'UniswapClient.getQuote: TREASURER_WALLET_ADDRESS env var is required (or pass swapperOverride)'
+      );
     }
-    const r = await this.opts.fetcher(`${this.opts.apiBase}/v1/quote`, {
-      method: "POST",
-      headers: { "x-api-key": this.opts.apiKey, "content-type": "application/json" },
-      body: JSON.stringify(req),
+
+    const requestBody: QuoteRequest = {
+      type: 'EXACT_INPUT',
+      amount: amountIn,
+      tokenInChainId: chainId,
+      tokenOutChainId: chainId,
+      tokenIn,
+      tokenOut,
+      swapper,
+      slippageTolerance: 0.5,
+      routingPreference: 'BEST_PRICE',
+      // V3 + V4 only — UniswapX is async/off-chain, bad for live demos
+      protocols: ['V3', 'V4'],
+    };
+
+    const res = await httpRequestWithRetry(`${UNISWAP_API_BASE}/quote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.apiKey,
+      },
+      body: JSON.stringify(requestBody),
     });
-    if (!r.ok) throw new TradingApiError(r.status, await r.text());
-    const parsed = QuoteResponseSchema.parse(await r.json());
-    return { res: parsed, quotedAt: Date.now() };
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Uniswap /quote failed: ${res.status} ${text.slice(0, 500)}`);
+    }
+
+    const json = (await res.json()) as QuoteResponse;
+    if (!json.quote || !json.quote.amountOut || BigInt(json.quote.amountOut) <= 0n) {
+      throw new Error(
+        `Uniswap /quote returned invalid quote (amountOut=${json.quote?.amountOut})`
+      );
+    }
+    return json;
   }
 
-  // Returns the calldata for the caller to broadcast. Caller computes tx hash
-  // post-broadcast and reconciles in payments.db. See FEEDBACK item #6.
-  async swap(opts: {
-    quote: QuoteResponse;
-    quotedAt: number;
-    signedPermit: { signature: string };
-  }): Promise<{ to: string; data: string; value: string; gasLimit: string }> {
-    const age = Date.now() - opts.quotedAt;
-    if (age > this.opts.quoteTtlMs) throw new StaleQuoteError(age, this.opts.quoteTtlMs);
-    const r = await this.opts.fetcher(`${this.opts.apiBase}/v1/swap`, {
-      method: "POST",
-      headers: { "x-api-key": this.opts.apiKey, "content-type": "application/json" },
-      body: JSON.stringify({ quote: opts.quote.quote, permitData: opts.quote.permitData, signature: opts.signedPermit.signature }),
+  // -------------------------------------------------------------------------
+  // signPermit2
+  // -------------------------------------------------------------------------
+
+  /**
+   * Signs the Permit2 typed data returned in QuoteResponse.permitData.
+   *
+   * Permit2 lets Uniswap's Universal Router pull tokens from the swapper
+   * wallet in a single tx, without a separate approve() tx.
+   *
+   * Pitfall: primaryType varies — could be 'PermitSingle', 'PermitTransferFrom',
+   * or 'PermitBatchTransferFrom'. Auto-detect from types object keys.
+   */
+  async signPermit2(
+    permitData: NonNullable<QuoteResponse['permitData']>,
+    signerPrivateKey: Hex
+  ): Promise<Hex> {
+    const account = privateKeyToAccount(signerPrivateKey);
+    const client = createWalletClient({
+      account,
+      chain: base,
+      transport: http(this.rpcUrl),
     });
-    if (!r.ok) throw new TradingApiError(r.status, await r.text());
-    const body = await r.json() as { swap: { to: string; data: string; value: string; gasLimit: string } };
-    return body.swap;
+
+    // Auto-detect primaryType from types object — Trading API does not
+    // explicitly mark which type is the entry point.
+    const typeKeys = Object.keys(permitData.types);
+    const candidates = [
+      'PermitSingle',
+      'PermitTransferFrom',
+      'PermitBatchTransferFrom',
+      'PermitBatch',
+    ];
+    const primaryType = candidates.find((c) => typeKeys.includes(c));
+    if (!primaryType) {
+      throw new Error(
+        `signPermit2: cannot detect primaryType from types keys: ${typeKeys.join(', ')}`
+      );
+    }
+
+    // viem signTypedData expects EIP-712 structure
+    const sig = await client.signTypedData({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      domain: permitData.domain as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      types: permitData.types as any,
+      primaryType,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      message: permitData.values as any,
+    });
+    return sig;
+  }
+
+  // -------------------------------------------------------------------------
+  // executeSwap
+  // -------------------------------------------------------------------------
+
+  /**
+   * Builds the swap transaction via /v1/swap and broadcasts it on-chain.
+   *
+   * Steps:
+   *   1. POST /v1/swap with {quote, permitSignature} → returns calldata.
+   *   2. Build viem walletClient with signer.
+   *   3. sendTransaction({ to, data, value }).
+   *   4. waitForTransactionReceipt → return TxReceipt.
+   */
+  async executeSwap(
+    signedQuote: SignedQuote,
+    signerPrivateKey: Hex
+  ): Promise<TxReceipt> {
+    if (!this.apiKey) {
+      throw new Error('UniswapClient.executeSwap: UNISWAP_API_KEY env var is required');
+    }
+
+    // Step 1: POST /v1/swap to get calldata
+    const swapBody: SwapRequest = {
+      quote: signedQuote.quoteResponse.quote,
+      permitSignature: signedQuote.permitSignature,
+    };
+
+    const swapRes = await httpRequestWithRetry(`${UNISWAP_API_BASE}/swap`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.apiKey,
+      },
+      body: JSON.stringify(swapBody),
+    });
+
+    if (!swapRes.ok) {
+      const text = await swapRes.text().catch(() => '');
+      throw new Error(
+        `Uniswap /swap failed: ${swapRes.status} ${text.slice(0, 500)}`
+      );
+    }
+
+    const swapData = (await swapRes.json()) as SwapResponse;
+    if (!swapData.swap || !swapData.swap.to || !swapData.swap.data) {
+      throw new Error(
+        `Uniswap /swap returned invalid response (missing to/data): ${JSON.stringify(swapData).slice(0, 300)}`
+      );
+    }
+
+    // Step 2 + 3: broadcast via viem
+    const account = privateKeyToAccount(signerPrivateKey);
+    const walletClient = createWalletClient({
+      account,
+      chain: base,
+      transport: http(this.rpcUrl),
+    });
+    const publicClient = createPublicClient({
+      chain: base,
+      transport: http(this.rpcUrl),
+    });
+
+    const txHash = await walletClient.sendTransaction({
+      to: swapData.swap.to,
+      data: swapData.swap.data,
+      value: BigInt(swapData.swap.value ?? '0'),
+    });
+
+    // Step 4: wait for receipt (default timeout ~30s for Base)
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: txHash,
+      timeout: 60_000,
+    });
+
+    return {
+      txHash,
+      status: receipt.status === 'success' ? 'success' : 'reverted',
+      blockNumber: receipt.blockNumber,
+      gasUsed: receipt.gasUsed,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // Convenience: full swap flow (getQuote → signPermit2 → executeSwap)
+  // -------------------------------------------------------------------------
+
+  /**
+   * One-call swap: quote → sign → execute. Use for simple cases where
+   * the caller doesn't need to inspect the quote before committing.
+   */
+  async swap(
+    tokenIn: Address,
+    tokenOut: Address,
+    amountIn: string,
+    signerPrivateKey: Hex,
+    chainId: number = 8453
+  ): Promise<{ quote: QuoteResponse; receipt: TxReceipt }> {
+    const swapper = privateKeyToAccount(signerPrivateKey).address as Address;
+    const quote = await this.getQuote(tokenIn, tokenOut, amountIn, chainId, swapper);
+
+    if (!quote.permitData) {
+      throw new Error('UniswapClient.swap: quote response has no permitData (cannot sign)');
+    }
+
+    const permitSignature = await this.signPermit2(quote.permitData, signerPrivateKey);
+    const signedQuote: SignedQuote = {
+      quoteResponse: quote,
+      permitSignature,
+      swapper,
+    };
+    const receipt = await this.executeSwap(signedQuote, signerPrivateKey);
+    return { quote, receipt };
   }
 }

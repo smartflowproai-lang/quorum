@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2020",
     "module": "CommonJS",
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2020"],
     "types": ["node"],
     "strict": true,
     "esModuleInterop": true,
@@ -10,11 +10,11 @@
     "outDir": "dist",
     "rootDir": "../../",
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "paths": {
+      "../../shared/*": ["../../shared/*"]
+    }
   },
-  "include": [
-    "*.ts",
-    "../../shared/*.ts"
-  ],
+  "include": ["*.ts", "../../shared/*.ts", "../scout/linkToEVM.ts", "../scout/publishToJudge.ts", "../scout/index.ts"],
   "exclude": ["node_modules", "dist"]
 }
