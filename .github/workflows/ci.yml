@@ -36,6 +36,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - name: Install shared
+        run: cd shared && npm install --no-package-lock
+      - name: Install agents
+        run: |
+          for a in scout judge executor treasurer; do
+            cd agents/$a && npm install --no-package-lock && cd ../..
+          done
       - name: Run tests
         run: |
           for a in scout judge executor treasurer; do
