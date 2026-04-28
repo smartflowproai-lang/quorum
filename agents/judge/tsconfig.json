@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "lib": ["ES2020"],
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "../../",
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "paths": {
+      "../../shared/*": ["../../shared/*"]
+    }
+  },
+  "include": ["*.ts", "../../shared/*.ts", "../scout/linkToEVM.ts", "../scout/publishToJudge.ts", "../scout/index.ts"],
+  "exclude": ["node_modules", "dist"]
+}
