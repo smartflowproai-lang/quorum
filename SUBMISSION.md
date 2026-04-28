@@ -33,6 +33,15 @@ Here's where the post-99.82%-retraction discipline kicks in. I'm not claiming Tr
 - When the float drops below threshold, it calls the Uniswap Trading API for an `EXACT_INPUT` quote, signs Permit2, posts to `/v1/swap`, broadcasts on Base
 - Every swap produces a Basescan receipt — pointer in `agents/treasurer/payments.db` once Day-6 wiring lands
 
+**First on-chain receipt** (manual smoke test, 2026-04-28):
+
+- Tx: [0xc03b8350...79b49849](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
+- Block 45,234,468, Base mainnet
+- 1 USDC → WETH via Universal Router + Permit2 — same path Treasurer takes programmatically (PR #1 d4-treasurer-extended)
+- Confirms wallet, Trading API, Permit2 signing, and Base settlement all work end-to-end before Treasurer code drives them
+
+
+
 The interesting positioning isn't the volume — it's the integration shape. Treasurer demonstrates pay-with-any-token end-to-end on real x402 traffic: an autonomous agent that converts whatever it has into whatever the next service wants, on demand, without a human signing anything. That maps directly onto the Uniswap Trading API's stated design intent.
 
 Real x402 traffic context (public x402scan data, 2026-04-26 snapshot):
