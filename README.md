@@ -20,7 +20,7 @@ QUORUM splits rug detection across four specialized agents — **Scout**, **Judg
 ```mermaid
 flowchart TB
   subgraph PUB["Public data sources (read-only, pre-existing public infra)"]
-    MAP["x402 Mapper<br/>21,944 endpoints<br/>99.9% EVM / 0.78% Solana"]
+    MAP["x402 Mapper<br/>22,043 endpoints<br/>99.9% EVM / 0.78% Solana"]
     WG["EVM Wallet Graph<br/>231,633 profiles<br/>Base + Ethereum, 100% EVM"]
     CB["Solana copy-bot events<br/>58,432 records<br/>14 watched SM wallets, 18 days"]
   end
@@ -77,7 +77,7 @@ Solana memecoins are the fastest-moving market in crypto — and the most rug-pr
 Three numbers from public data:
 - **14** smart-money Solana wallets profiled over **18 days** (58,432 events archived in the public copy-bot logs I run)
 - **231,633** EVM wallet profiles indexed (Base + Ethereum) — the cross-chain rug-farmer lookup surface
-- **21,944** registered x402 endpoints (99.9% EVM / 0.78% Solana per the mapper I run)
+- **22,043** registered x402 endpoints (99.9% EVM / 0.78% Solana per the mapper I run, 2026-04-27 lockfile)
 
 ## How QUORUM works
 
@@ -144,7 +144,7 @@ Showcased patterns:
 2. Encrypted ephemeral group formation — Scout broadcasts "possible rug" to available Judge instances.
 3. Asynchronous reply collection — Executor awaits quorum across any available Judge instances (hence the project name).
 
-Includes a **reconnect-after-partition test** in [`infra/chaos.sh`](./infra/chaos.sh): kill one AXL node mid-verdict, the remaining three carry on, the killed node rejoins and re-syncs state from 0G.
+Includes a **reconnect-after-partition test** in [`infra/chaos.sh`](./infra/chaos.sh) (lands Day 7–8): kill one AXL node mid-verdict, the remaining three carry on, the killed node rejoins and re-syncs state from 0G. The bidirectional roundtrip across Frankfurt ↔ NYC is already verified via [`infra/axl-hello.sh`](./infra/axl-hello.sh) (Day-1, signed messages crossing both ways).
 
 ### World Chain (execution-layer narrative, not a separate track)
 
@@ -156,22 +156,25 @@ See [RUNBOOK.md](./RUNBOOK.md) for the cross-host deploy guide. TL;DR:
 
 ```bash
 # Frankfurt (VPS-A): Scout + Judge
-./infra/deploy-vps-a.sh
+./infra/deploy-vps.sh frankfurt
 
 # NYC (VPS-B): Executor + Treasurer
-./infra/deploy-vps-b.sh
+./infra/deploy-vps.sh nyc
 
-# Local smoke test (single-host fallback):
-docker compose -f infra/docker-compose.yml up
+# Cross-Atlantic AXL roundtrip smoke test (already verified Day 1):
+./infra/axl-hello.sh
+
+# Local docker fallback:
+docker compose up
 ```
 
 ## Chaos test
 
 ```bash
-./infra/chaos.sh
+./infra/chaos.sh   # lands Day 7–8 of the build window
 ```
 
-Kills one agent mid-verdict; remaining three continue; killed agent rejoins and syncs state from 0G. Expected recovery <30s.
+Kills one agent mid-verdict; remaining three continue; killed agent rejoins and syncs state from 0G. Target recovery <30s.
 
 ## Backtest results
 

@@ -11,7 +11,7 @@
 
 Four agents, two continents, one encrypted mesh, one verdict per Solana memecoin candidate. Scout watches 14 curated Solana smart-money wallets in Frankfurt, Judge scores candidates against an 18-day archive of 58,432 copy-bot events, Executor lands attestations on Base via KeeperHub, Treasurer pays for every job with x402 and tops itself up via the Uniswap Trading API. Every agent has a separate ed25519 identity on the Gensyn AXL mesh and gets paid (or pays) on a per-message basis. No central broker, no shared wallet, no human in the gas loop.
 
-The mesh is the point. Most "multi-agent" demos run four functions in one process and call it a system. QUORUM physically separates Scout/Judge in Frankfurt from Executor/Treasurer in NYC — when I take the NYC node down mid-verdict, Frankfurt keeps producing candidates, queues messages, and drains them on reconnect. The chaos test in `infra/chaos.sh` is the part I'd pin if a judge only had two minutes.
+The mesh is the point. Most "multi-agent" demos run four functions in one process and call it a system. QUORUM physically separates Scout/Judge in Frankfurt from Executor/Treasurer in NYC — when I take the NYC node down mid-verdict, Frankfurt keeps producing candidates, queues messages, and drains them on reconnect. A scripted partition-recovery demo (`infra/chaos.sh`) lands Day 7–8 of the build window — kill NYC mid-verdict, time reconvergence on reconnect, log the receipt. The bidirectional roundtrip across Frankfurt ↔ NYC is already verified (Day 1, see commits below).
 
 ---
 
@@ -19,7 +19,7 @@ The mesh is the point. Most "multi-agent" demos run four functions in one proces
 
 ### Gensyn AXL — the spine
 
-Every agent boots with a stable ed25519 keypair. Messages are typed (`candidate`, `verdict`, `attestation`, `gas_request`, `settlement`) and ULID-deduped at the receiver, so reconnect storms don't double-count. Frankfurt and NYC hosts peer over TLS port 9001 on Yggdrasil, signed at L7. I shipped a typed TypeScript wrapper around the AXL HTTP interface in `shared/axl-wrap.ts` — about 120 lines, MIT-licensed, reusable by any team. The bidirectional roundtrip evidence is in `d1-init` commit logs (2026-04-22, signed messages crossing the Atlantic both ways).
+Every agent boots with a stable ed25519 keypair. Frankfurt and NYC hosts peer over TLS port 9001 on Yggdrasil, signed at L7. I shipped a typed TypeScript wrapper around the AXL HTTP interface in `shared/axl-wrap.ts` — about 120 lines, MIT-licensed, reusable by any team. Messages carry typed envelopes (`candidate`, `verdict`, `attestation`, `gas_request`, `settlement`); the dedup-on-reconnect layer (ULID-keyed receiver map) wires in Day 5–6 alongside the chaos-test rig. The bidirectional roundtrip evidence is already in commit history (2026-04-24 Day-1 init, signed messages crossing the Atlantic both ways).
 
 ### KeeperHub — the lander
 
@@ -44,10 +44,11 @@ Here's where the post-99.82%-retraction discipline kicks in. I'm not claiming Tr
 
 The interesting positioning isn't the volume — it's the integration shape. Treasurer demonstrates pay-with-any-token end-to-end on real x402 traffic: an autonomous agent that converts whatever it has into whatever the next service wants, on demand, without a human signing anything. That maps directly onto the Uniswap Trading API's stated design intent.
 
-Real x402 traffic context (public x402scan data, 2026-04-26 snapshot):
-- ~22,000 x402 endpoints registered on the index
-- ~2.36M Base x402 micropayments since the 2026-04-12 facilitator launch
-- ~5,804 distinct EOAs paying or being paid through the rail
+Real x402 traffic context (my own observatory snapshot, 2026-04-27 lockfile):
+- 22,043 x402 endpoints catalogued
+- 5.27M Base x402 micropayments since 2026-04-12 (15-day window, clean rows after wash filter: 2.81M)
+- ~135K distinct tx senders, ~366K distinct from-wallets, ~356K distinct to-wallets on the rail
+- Caveat: facilitator-vs-P2P split is reported only on the classified subset (~13% of clean dataset); public methodology + retraction history at smartflowproai.substack.com
 
 Pay-with-any-token sits in front of that traffic. Treasurer is one agent on the rail today — the goal isn't to be the only one, it's to be the reference shape for the next thousand.
 
@@ -79,9 +80,12 @@ The natural next surface is `quorum/submit-verdict` as an MCP tool — any exter
 | `agents/treasurer/` | NYC — Uniswap Trading API client, USDC float manager |
 | `agents/verifier/`  | Frankfurt — validates Judge verdicts, issues attestations (5-layer audited, 38 tests) |
 | `shared/axl-wrap.ts`| Typed TypeScript wrapper around the AXL HTTP interface |
-| `infra/chaos.sh`    | Partition recovery test — kills NYC node, measures reconverge |
-| `FEEDBACK-UNISWAP.md`   | Uniswap Trading API feedback (≥6 specific items) |
-| `FEEDBACK-KeeperHub.md` | KeeperHub integration feedback |
+| `infra/deploy-vps.sh` | Single deploy script with role flag (Frankfurt vs NYC) |
+| `infra/axl-hello.sh`  | Bidirectional cross-Atlantic roundtrip smoke test |
+| `infra/chaos.sh`    | Partition-recovery test — lands Day 7–8 of the build window |
+| `FEEDBACK.md`       | Index of partner-specific feedback files (Uniswap auto-DQ guard) |
+| `FEEDBACK-UNISWAP.md`   | Uniswap Trading API feedback (≥6 specific items, $250 bounty) |
+| `FEEDBACK-KeeperHub.md` | KeeperHub integration feedback ($500 bounty, 2 × $250) |
 | `DATA-COVERAGE.md`  | Honest breakdown of what data backs which claim |
 
 ---
@@ -91,6 +95,27 @@ The natural next surface is `quorum/submit-verdict` as an MCP tool — any exter
 All QUORUM agent code in this repo was written between 2026-04-24 and 2026-05-03 inside the OpenAgents build window. The three external data sources Scout/Judge consume (Helius copy-bot stream, EVM wallet graph, x402 endpoint index) are pre-existing public infrastructure I was already running before the window opened — see `DATA-COVERAGE.md` for the breakdown.
 
 I used Claude Code (Anthropic) for scaffolding, code review, and documentation drafting. Architectural decisions, partner-track positioning, scoring feature selection, and final approval are mine. Per-commit AI-assistance attribution lives in commit messages.
+
+---
+
+## Build evidence — commits
+
+| Date | Commit | What landed |
+|-----|--------|-------------|
+| 2026-04-24 | `f88d54d` d1-infra | Monorepo scaffold, stub agents, mermaid architecture |
+| 2026-04-24 | `340c607` d1-fix | CI without npm cache, docker build manual-only |
+| 2026-04-24 | `777cc08` d1-init | AXL hello-world, bidirectional Frankfurt ↔ NYC mesh evidence |
+| 2026-04-24 | `49aaec0` d2-scout (#a) | Helius WS client, bridge-linker scaffold |
+| 2026-04-25 | `dbf4367` d2-scout (#b) | Helius WS reconnect/heartbeat + 14-wallet subscribe stub |
+| 2026-04-26 | `2c86fe0` d2-submission | SUBMISSION.md scaffold, README voice polish |
+| 2026-04-27 | `a20bd93` opsec | Remove internal planning docs from public repo |
+| 2026-04-28 | `b94414e` Day-4 receipt | First on-chain Basescan receipt (manual 1-USDC smoke test) |
+| 2026-04-28 | `6295be7` d4-treasurer (#1) | Uniswap Trading API + Permit2 + x402 pay-with-any-token implementation |
+| 2026-04-28 | `19d47bf` d5-verifier (#2) | Verifier extended (validator + attestation + AXL handler, 5-layer audited) |
+| 2026-04-28 | `40bfe51` d5-feedback (#4) | FEEDBACK-UNISWAP.md (7 pain points + what worked) |
+| 2026-04-28 | `04a8951` d6-treasurer (#5) | Uniswap-client scaffold + 7 integration tests (7/7 green) |
+
+The full commit history is on the public GitHub repo with per-commit AI-assistance attribution (Claude Code (Anthropic) — scaffolding, code review, documentation drafting; architectural and design decisions are mine).
 
 ---
 
