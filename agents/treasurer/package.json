@@ -1,21 +1,24 @@
 {
   "name": "@quorum/treasurer",
-  "version": "0.1.0",
-  "description": "QUORUM treasurer agent — PRE-KICKOFF DRAFT 2026-04-24",
+  "version": "0.4.0",
+  "description": "QUORUM treasurer agent — multi-token balance tracking, Uniswap rebalancing, x402 pay-with-any-token",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test test/*.test.ts"
+    "test": "npx ts-node treasurer.test.ts"
   },
   "dependencies": {
+    "ethers": "^6.13.0",
     "viem": "^2.21.0",
+    "axios": "^1.7.0",
+    "ws": "^8.18.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "tsx": "^4.19.0",
+    "@types/ws": "^8.5.0",
     "typescript": "^5.4.0"
   },
   "license": "MIT"
