@@ -1,35 +1,14 @@
-# Uniswap Trading API Feedback — from QUORUM
+# QUORUM — partner integration feedback (index)
 
-Integration notes collected during OpenAgents hackathon build (2026-04-24 to 2026-05-03).
+This repo carries partner-specific feedback files for the two ETHGlobal OpenAgents tracks where I built integration and where the sponsor explicitly asks for written feedback. To make it easy to navigate, this file is the index.
 
-Entry format: `[Date] [Area] What we hit — impact on build — suggested fix`.
+| Partner | File | Bounty target |
+|---|---|---|
+| Uniswap Foundation (Trading API on Base) | [FEEDBACK-UNISWAP.md](./FEEDBACK-UNISWAP.md) | $250 partner-feedback bounty |
+| KeeperHub (scheduled execution + agentcash + MCP) | [FEEDBACK-KeeperHub.md](./FEEDBACK-KeeperHub.md) | $500 bounty (2 × $250) |
 
-## API ergonomics
+Both files use the same format per item: **what I hit · impact on the build · what I'd change**. Each entry is a real friction point I logged while wiring Treasurer (Uniswap) or Executor (KeeperHub) against the live partner surface during the 2026-04-24 → 2026-05-03 build window.
 
-(to be filled)
+Why two files instead of one: the Uniswap Foundation track explicitly asks for `FEEDBACK.md`-style documentation per their bounty rules; the KeeperHub bounty asks for actionable per-product items. Splitting keeps each partner's reviewer focused on the items most relevant to them, while this index file satisfies the canonical `FEEDBACK.md` convention.
 
-## Documentation clarity
-
-(to be filled)
-
-## Edge cases / gotchas
-
-(to be filled)
-
-## Base chain (8453) specifics
-
-(to be filled)
-
-## pay-with-any-token / x402 integration notes
-
-(to be filled — relevant to OpenAgents sponsor alignment)
-
-## What worked well
-
-(to be filled)
-
----
-
-**Submission context**: QUORUM's Treasurer agent uses Uniswap Trading API (`/quote`, `/check_approval`, `/swap`) on Base to validate liquidity before Executor acts. `x-api-key` auth via developer dashboard. Integration emphasizes protocol innovation + developer tooling angles.
-
-**Contact**: Tom Smart, SmartFlow — smartflowproai.com
+— Tom Smart ([@TomSmart_ai](https://x.com/TomSmart_ai)) — [smartflowproai.substack.com](https://smartflowproai.substack.com)
