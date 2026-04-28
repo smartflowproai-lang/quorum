@@ -75,13 +75,13 @@ flowchart TB
 Solana memecoins are the fastest-moving market in crypto — and the most rug-prone. Existing detection is either closed-source, single-model, or human-curated Telegram groups. None of that scales to machine-speed trading.
 
 Three numbers from public data:
-- **14** smart-money Solana wallets profiled over **18 days** (58,432 events archived in our public copy-bot logs)
+- **14** smart-money Solana wallets profiled over **18 days** (58,432 events archived in the public copy-bot logs I run)
 - **231,633** EVM wallet profiles indexed (Base + Ethereum) — the cross-chain rug-farmer lookup surface
-- **21,944** registered x402 endpoints (99.9% EVM / 0.78% Solana per our mapper)
+- **21,944** registered x402 endpoints (99.9% EVM / 0.78% Solana per the mapper I run)
 
 ## How QUORUM works
 
-**Scout** watches 14 curated Solana smart-money wallets for new buys (the 18-day, 58K-event archive is the seed dataset). For every buyer Scout sees, it checks — via an EVM bridge-linker (Wormhole / deBridge / Allbridge) — whether the buyer has bridged from an EVM address in our 231K-profile graph. When there's a link, Scout attaches `evm_rug_prior_count` to the event. Pure Solana detection still runs when no bridge link exists.
+**Scout** watches 14 curated Solana smart-money wallets for new buys (the 18-day, 58K-event archive is the seed dataset). For every buyer Scout sees, it checks — via an EVM bridge-linker (Wormhole / deBridge / Allbridge) — whether the buyer has bridged from an EVM address in the 231K-profile graph. When there's a link, Scout attaches `evm_rug_prior_count` to the event. Pure Solana detection still runs when no bridge link exists.
 
 **Judge** scores each candidate token from a 10-feature vector split into three families:
 - 6 **Solana-native** features: buyer-cluster overlap with prior Solana rugs (from the 58K archive), first-buyer latency, dev-wallet concentration, LP lock status, sniper-bot share, holder count at T+5min.
@@ -111,7 +111,7 @@ Short version:
 
 QUORUM's data spine predates every major agent-economy launch our partners just shipped. The mapper was indexing x402 endpoints before Base crossed 100M cumulative x402 transactions. The EVM wallet graph was profiling addresses before the month x402 transaction volume hit its $15M ATH. The Solana copy-bot archive was collecting events before Coinbase's x402 facilitator launched on World Chain (2026-04-17). The ERC-8004 snapshot caught 151,370 agents at the moment that registry crossed a psychological threshold.
 
-Any team can ship four agents on a mesh in ten days. No team can ship ten weeks of longitudinal data on the behaviour of rug farmers on two chains in ten days. That data is the difference between "here's a classifier we trained" and "here's a classifier that knows what the last eighteen days of Solana memecoin buyers actually did."
+Any team can ship four agents on a mesh in ten days. No team can ship ten weeks of longitudinal data on the behaviour of rug farmers on two chains in ten days. That data is the difference between "here's a classifier I trained" and "here's a classifier that knows what the last eighteen days of Solana memecoin buyers actually did."
 
 Time is the one input you cannot buy.
 
@@ -119,7 +119,7 @@ Time is the one input you cannot buy.
 
 ### KeeperHub
 
-Executor uses KeeperHub's scheduled-retry primitive and Jito bundle landing path to guarantee attestation inclusion. Treasurer autonomously pays KeeperHub's gas bill via x402 payment channel per-call. The MCP server exposes `quorum/submit-verdict` so external agents (ElizaOS, OpenClaw, CrewAI) can relay their own findings through our Executor — turning QUORUM from a closed demo into a reusable execution primitive.
+Executor uses KeeperHub's scheduled-retry primitive and Jito bundle landing path to guarantee attestation inclusion. Treasurer autonomously pays KeeperHub's gas bill via x402 payment channel per-call. The MCP server exposes `quorum/submit-verdict` so external agents (ElizaOS, OpenClaw, CrewAI) can relay their own findings through QUORUM's Executor — turning QUORUM from a closed demo into a reusable execution primitive.
 
 Target: 40+ on-chain verdict attestations over 10 days with zero missed executions.
 
