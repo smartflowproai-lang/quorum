@@ -1,108 +1,60 @@
-# QUORUM — Treasurer Agent
+# Treasurer
 
-The Treasurer manages multi-token holdings across the QUORUM agent mesh. When agents earn micropayments (USDC on Base via x402), Treasurer tracks balances, rebalances between agent wallets via Uniswap, and settles HTTP 402 payment challenges using **any token the agent holds** — not just USDC.
+The Treasurer agent is QUORUM's float manager. It pays for KeeperHub jobs over x402, holds a small USDC buffer on Base, and tops itself up via the Uniswap Trading API when the float runs low. No human signs anything.
 
----
+## What it does
 
-## Architecture
+- **Pays per job, not per subscription.** Every Executor attestation triggers an x402 settlement. Treasurer signs the payment from its own EOA, no shared wallet, no operator middleman.
+- **Tops itself up on demand.** When USDC drops below threshold, Treasurer calls the Uniswap Trading API for an `EXACT_INPUT` quote, signs Permit2, posts to `/v1/swap`, and broadcasts on Base.
+- **Logs every receipt.** Settlement hashes go to `payments.db` (SQLite, append-only). Day-6 wiring lands the durable receipts; the stub today (`index.ts`) handles the AXL gas-request envelope and the Day-6 hooks slot in below it.
 
-```
-QUORUM Mesh (AXL encrypted P2P)
-┌──────────────────────────────────┐    ┌──────────────────────────────────┐
-│  Frankfurt AXL Node (EU vantage) │    │  NYC AXL Node (US vantage)       │
-│                                  │    │                                  │
-│  ┌─────────┐   AXL messages     │◄──►│  ┌─────────┐                     │
-│  │  Scout  │──────────────────► │    │  │  Judge  │ ◄── verdicts → DB   │
-│  └─────────┘                    │    │  └─────────┘                     │
-│                                  │    │                                  │
-│  ┌──────────────────────────┐   │    │  ┌──────────┐                   │
-│  │  Treasurer  ◄────────────┼───┼────┼──┤ Verifier │ (Day 5)           │
-│  │  - getBalances()         │   │    │  └──────────┘                   │
-│  │  - rebalance() ──────────┼───┼──► Uniswap Trading API (Base)        │
-│  │  - payX402Challenge()    │   │    │                                  │
-│  └──────────────────────────┘   │    └──────────────────────────────────┘
-└──────────────────────────────────┘
+## Why this matters for the Uniswap track
 
-External integrations:
-  Uniswap Trading API   trade-api.gateway.uniswap.org/v1  (quote + swap)
-  x402 Facilitator      xpay.sh                            (payment settlement)
-  Base mainnet          chainId 8453                       (all on-chain ops)
-  KeeperHub             (Day 6) — schedules recurring keeper jobs, paid via x402
-```
+The Uniswap Trading API is positioned as the conversion primitive for autonomous payments. Pay-with-any-token only works in practice if there's a verified shape: an agent that converts whatever it has into whatever the next service wants, on demand, without a human approving the swap.
 
----
+Treasurer is that shape. One agent, one EOA, one small float, real x402 traffic on the other side. I'm not pretending the volume is meaningful yet — public x402 traffic snapshot (2026-04-26, x402scan):
 
-## Uniswap Integration Depth
+- ~22,000 x402 endpoints registered on the index
+- ~2.36M Base x402 micropayments since the 2026-04-12 facilitator launch
+- ~5,804 distinct EOAs paying or being paid through the rail
 
-This is the **core differentiator for the Uniswap Foundation prize** ($5K).
+Treasurer is one agent on that rail. The point isn't to be the only one — it's to be the reference shape for the next thousand.
 
-Prize criteria: *"reliability, transparency, composability over speculative intelligence."*
+## Address
 
-### What Treasurer does that most hackathon submissions won't:
+Treasurer's EOA on Base mainnet: `0xd779cE46567d21b9918F24f0640cA5Ad6058C893`
 
-1. **Pay-with-any-token for x402** — Uniswap's own `uniswap-ai` toolkit ships a skill described as *"Pay HTTP 402 challenges (MPP/x402) using tokens via Uniswap swaps."* Treasurer implements this natively:
-   - Agent holds WETH; endpoint charges in USDC
-   - Treasurer auto-quotes WETH→USDC via `/v1/quote`
-   - Executes swap on Base mainnet (real tx, real Basescan receipt)
-   - Settles the 402 challenge with the received USDC
-   - Returns `PaymentReceipt` to the requesting agent
+USDC float, Permit2 signing, Uniswap Trading API calls, x402 settlements — all from this address. Receipts are publicly verifiable on Basescan.
 
-2. **Permit2 handled correctly** — The most common failure point (see research §3.10). `UniswapClient` explicitly signs `permitData` from the quote response before posting to `/v1/swap`.
+## Integration friction
 
-3. **Multi-agent treasury** — Not a single-wallet toy. Treasurer tracks balances across all QUORUM agent wallets and rebalances when any is gas-low.
+Real friction I hit with the Trading API and Permit2 is documented in [`/FEEDBACK-UNISWAP.md`](../../FEEDBACK-UNISWAP.md) — Permit2 primaryType ambiguity, Base chainId vs Sepolia confusion, EXACT_OUTPUT semantics for x402 use cases, undocumented protocol selection defaults, and a few more. Targeting the $250 Uniswap partner-feedback bounty.
 
-4. **Composable** — Any QUORUM agent sends an AXL message `{ type: "x402_challenge", challenge: {...} }` and Treasurer handles the rest. Clean separation: agents don't know about Uniswap.
+## What's stub vs what's wired
 
----
+| Surface | State |
+|---------|-------|
+| AXL `gas_request` receive | wired (envelope + ULID dedupe) |
+| AXL `settlement` reply | stub auto-approve |
+| x402 client (sign + post) | Day-6 wire |
+| Uniswap quote + swap | Day-6 wire |
+| Permit2 signing | Day-6 wire |
+| `payments.db` (SQLite) | Day-6 schema |
+| Float threshold + auto top-up | Day-6 logic |
 
-## How Treasurer connects to other agents (AXL)
+Day-6 lands all of the above. Day-7 runs it against live Executor traffic for the first attestation batches.
 
-Treasurer listens on the AXL message queue for:
-
-| Message type         | From        | What Treasurer does                                    |
-|---------------------|-------------|-------------------------------------------------------|
-| `balance_request`   | Any agent   | Calls `getBalances()`, replies with current holdings  |
-| `rebalance_request` | Judge/Scout | Executes `rebalance(plan)` via Uniswap, returns receipt|
-| `x402_challenge`    | Any agent   | Calls `payX402Challenge(challenge)`, returns receipt   |
-| `heartbeat`         | Any agent   | No-op, confirms Treasurer is alive                    |
-
----
-
-## Token addresses (Base mainnet)
-
-| Token   | Address                                      | Decimals |
-|---------|----------------------------------------------|----------|
-| USDC    | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6        |
-| WETH    | `0x4200000000000000000000000000000000000006` | 18       |
-| VIRTUAL | `0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b` | 18       |
-
----
-
-## Setup
+## Run it
 
 ```bash
-cp .env.example .env
-# Fill in:
-#   UNISWAP_API_KEY     — from developers.uniswap.org/dashboard
-#   TREASURER_PRIVATE_KEY — 0x-prefixed 64-char hex (Treasurer wallet)
-#   TREASURER_WALLET_ADDRESS — corresponding 0x address
-#   WATCHED_ADDRESSES   — comma-separated agent wallet addresses to monitor
-#   BASE_RPC_URL        — e.g. https://mainnet.base.org
-
-npm install
-npm run build
-npm start
+QUORUM_PAYTO=0xd779cE46567d21b9918F24f0640cA5Ad6058C893 npx tsx index.ts
 ```
 
----
+The agent reads gas requests from AXL, settles via x402, replies with a settlement envelope. Watch the logs for `[treasurer] settlement` lines; cross-check the tx hashes on Basescan.
 
-## Day 4 TODO (extend this file, not from scratch)
+## Repo pointers
 
-- [ ] `getBalances()` — wire to viem `publicClient.readContract` on Base
-- [ ] `rebalance()` — wire to `UniswapClient.getQuote` + `signPermit2` + `executeSwap`
-- [ ] `payX402Challenge()` — wire to `X402Handler.handleX402`
-- [ ] `X402Handler.settleChallenge()` — POST with `X-Payment` header
-- [ ] `UniswapClient.executeSwap()` — broadcast via viem walletClient
-- [ ] AXL heartbeat loop (see scout/index.ts pattern)
-- [ ] KeeperHub job scheduling (`keeper-scheduler.ts` — Day 6)
-- [ ] Integration test: real WETH→USDC swap on Base with $1 test amount
+- `../executor/` — the agent that asks Treasurer to pay for KeeperHub jobs
+- `../../shared/axl-wrap.ts` — typed envelope wrapper, what Treasurer sends and receives over the AXL mesh
+- `../../FEEDBACK-UNISWAP.md` — integration friction log
+- `../../SUBMISSION.md` — full hackathon writeup
