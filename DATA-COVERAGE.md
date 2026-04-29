@@ -2,7 +2,7 @@
 
 Explicit per-chain breakdown of every dataset QUORUM reads from. If a number appears in the README, the demo video, or a partner write-up, its origin is listed here.
 
-**Last verified**: 2026-04-17 22:55 PL (live DB check on author's infrastructure).
+**Last verified**: 2026-04-27 (numbers locked in `numbers-ground-truth-lockfile-2026-04-28`; live DB check on author's infrastructure).
 
 ---
 
@@ -26,7 +26,7 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 
 ## 3. x402 Endpoint Mapper (`mapper.db`)
 
-- **Size**: 21,944 registered endpoints (snapshot 2026-04-18).
+- **Size**: 22,043 registered endpoints (snapshot 2026-04-27 lockfile).
 - **Chain composition**: **99.9% EVM (Base + Ethereum + misc EVM L2s) / 0.78% Solana**. Publicly reported.
 - **Source**: author's x402 network mapper, authored 2026-Q1 through 2026-04-17.
 - **What QUORUM uses it for**: pitch-level ecosystem context only ("agent economy has a trust crisis"). Not a runtime data source for agent logic.
