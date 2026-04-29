@@ -45,10 +45,10 @@ The interesting positioning isn't the volume — it's the integration shape. Tre
 Real x402 traffic context (my own observatory, 17-day window 2026-04-12 → 2026-04-29 inclusive; numbers verified live against `payments.db` + `mapper.db` on 2026-04-29 09:19 UTC; methodology in `DATA-COVERAGE.md`; final pre-submit refresh planned 2026-05-02):
 
 - 22,054 x402 endpoints catalogued across three primary registries plus tail sources
-- 5,862,133 raw Base x402 payment candidates → 3,013,111 clean payments after wash filter (48.6% removed as self-referential / dust / burst-pattern noise)
-- 400,926 distinct from-wallets, 372,727 distinct to-wallets across clean payments, mean payment $1.16
+- 5,877,367 raw Base x402 payment candidates → 3,028,345 clean payments after wash filter (48.5% removed as self-referential / dust / burst-pattern noise)
+- ~401K distinct from-wallets, ~373K distinct to-wallets across clean payments, mean payment $1.16
 - 61 facilitator-class signing addresses tracked (54 mapped Coinbase CDP + 7 pattern-inferred candidates — including a single high-volume unlabelled facilitator likely Bankr or Mogami, documented in methodology)
-- Caveat upfront: facilitator-vs-P2P classification currently complete for 32.7% / 984,563 of the clean subset (up from 13.3% on 2026-04-28 as the `eth_getTransactionByHash` backfill against Base RPC progresses); the 67.3% balance is still mid-backfill (~14h compute remaining). The facilitator-vs-P2P split holds only on the classified subset. Methodology and number-history at smartflowproai.substack.com (corrections logged inline)
+- Caveat upfront: facilitator-vs-P2P classification currently complete for 13.0% / 392,556 of the clean subset (consistent with the n=200 sample baseline of 13.3% from 2026-04-28; the `eth_getTransactionByHash` backfill against Base RPC is progressing incrementally); the 87.0% balance is still mid-backfill. The facilitator-vs-P2P split holds only on the classified subset. Methodology and number-history at smartflowproai.substack.com (corrections logged inline)
 
 Pay-with-any-token sits in front of that traffic. Treasurer is one agent on the rail today — the goal isn't to be the only one, it's to be the reference shape for the next thousand.
 
