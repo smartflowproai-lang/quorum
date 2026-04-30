@@ -1,12 +1,14 @@
 {
   "name": "@quorum/executor",
-  "version": "0.1.0",
-  "description": "QUORUM executor agent — PRE-KICKOFF DRAFT 2026-04-24",
-  "main": "dist/index.js",
+  "version": "0.2.0",
+  "description": "QUORUM executor agent — KeeperHub MCP wire (Day 6-7)",
+  "main": "dist/agents/executor/index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "node dist/agents/executor/index.js",
     "build": "tsc",
-    "test": "echo \"no tests yet\" && exit 0"
+    "verify:kh": "tsx keeperhub-wire/verify-mode.ts",
+    "verify:kh:live": "KH_STUB=0 tsx keeperhub-wire/verify-mode.ts",
+    "test": "node --import tsx --test keeperhub-wire/test/*.test.ts"
   },
   "dependencies": {
     "viem": "^2.21.0",
@@ -14,6 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.0"
   },
   "license": "MIT"
