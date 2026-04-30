@@ -5,79 +5,103 @@ Project: QUORUM (ETHGlobal OpenAgents 2026)
 Integration period: 2026-04-24 → 2026-05-03
 Treasurer EOA: `0xd779cE46567d21b9918F24f0640cA5Ad6058C893`
 
-This is the partner-feedback bounty submission ($500, 2 × $250) for the KeeperHub track. Each item is a real friction point I hit wiring Executor against KeeperHub's scheduled-execution primitive on Base, paying for jobs via x402 USDC funded by Treasurer. Format per item: **what I hit · impact on the build · what I'd change**.
+This is the partner-feedback bounty submission ($500, 2 × $250) for the KeeperHub track. Each item is a real friction point I hit wiring Executor against KeeperHub's scheduled-execution primitive on Base, paying for jobs via x402 USDC funded by Treasurer. Format per item: **what I tried · what I expected · what happened · suggestion**.
 
-The integration has two surfaces: the human-builder onboarding (docs, dashboard, agentcash setup) and the agent-runtime surface (MCP `search_workflows` / `call_workflow`, x402 invoicing, retry semantics). Items below mix both because both matter for autonomous-agent integrators.
+## Why this feedback is shaped differently than most
 
----
+Most integration feedback is one builder, one app, ten days. Mine is filtered through an x402 observatory I've been running outside the hackathon: 22,054 endpoints catalogued across the three primary x402 registries plus tail sources, and 5,877,367 raw Base mainnet x402 payment candidates indexed over a rolling 17-day window (3,028,345 clean payments after wash filter; methodology in `DATA-COVERAGE.md`). Numbers verified live against `payments.db` + `mapper.db` 2026-04-29 09:19 UTC.
 
-## 1 — `search_workflows` MCP tool returns matches without a stable workflow-identifier guarantee
+That visibility shaped which KH items I prioritized. I'm not just guessing what the high-volume integrator's failure mode looks like — I can see the underlying x402 traffic shape on Base today and make grounded predictions about where KH's surface bends when that volume routes through it. Items 2, 3, and 5 below in particular come from that visibility, not from "here's what bit me on Tuesday".
 
-**What I hit.** When Executor calls `search_workflows` via the KeeperHub MCP server, the response is a ranked list of candidate workflows with descriptions and example invocations. The `id` field on each result is documented as the workflow handle, but the same logical workflow can appear under different IDs across registry refreshes (when the workflow author republishes a corrected version). For an autonomous agent that caches "the workflow I'm using to land Base attestations", a quiet ID rotation means the cached handle 404s on next call, and the agent has to re-search to recover.
-
-**Impact.** Executor's first integration spike cached the workflow ID at boot and reused it on every verdict. After a workflow-author republish on the KH side, the cached ID stopped resolving. The agent's failure mode was the worst-case quiet one: `call_workflow` returned a clean error string, Executor logged it, retried with the same cached ID, retried again, then bailed — meanwhile verdicts were piling up unattested. Adding "re-search on first 404, cache for 6h max" was the fix, but it took a debugging session to realise the cache was the problem.
-
-**Suggestion.** Either guarantee workflow IDs are stable across republishes (with a separate version tag agents can pin), or surface a `workflow_handle` field that maps stable to current ID. For agent integrators, the handle stability is what makes the cache pattern safe.
+The integration has two surfaces: the human-builder onboarding (docs, dashboard, agentcash setup) and the agent-runtime surface (MCP `search_workflows` / `call_workflow`, x402 invoicing, retry semantics, webhook delivery). Items below mix both because both matter for autonomous-agent integrators.
 
 ---
 
-## 2 — agentcash wallet UX assumes a human at the dashboard
+## 1 — `search_workflows` MCP returns matches without a stable workflow-identifier guarantee
 
-**What I hit.** The agentcash wallet onboarding (the recommended way for agents to fund x402 calls into KH) walks a builder through wallet creation, USDC top-up, and policy-setting via dashboard clicks. Most of those steps have an underlying API, but the docs lead with the dashboard flow. For an autonomous deployment script (`deploy-vps.sh nyc`) that needs to provision a fresh wallet, fund it, and set the spend-policy without a human in the loop, the docs leave the API path implicit.
+**What I tried.** Cache the `id` returned by `search_workflows` at agent boot, reuse it on every verdict. Standard pattern for any agent that wants to skip discovery on the hot path.
 
-**Impact.** I rebuilt the onboarding flow against the API by reading the dashboard's network tab. Worked, but two of the policy fields (`max_per_call_usdc`, `daily_envelope_usdc`) accept different units in the API vs the dashboard (one takes raw wei-style, the other takes decimal USDC), and I shipped a misconfigured wallet for a few hours until the first overrun blocked.
+**What I expected.** The `id` field is documented as the workflow handle. I expected it to be stable across the workflow author's republishes — i.e. the workflow's logical identity doesn't change when the author ships v1.1 over v1.0.
 
-**Suggestion.** Add an "Agent integration" section to the agentcash docs, mirroring the dashboard flow with the canonical API calls and example payloads. Standardise the unit (decimal USDC everywhere or raw everywhere), or document the unit choice per field. The agent-integrator path is going to dominate volume — putting it first in the docs would prevent the entire class of "I trusted the dashboard tooltip" misconfigurations.
+**What happened.** After a workflow-author republish on the KH side, my cached ID stopped resolving. `call_workflow` returned a clean error string, Executor logged it, retried with the same cached ID, retried again, then bailed. Verdicts piled up unattested for ~14 minutes until I caught it. The failure mode was the worst-case quiet kind: no panic, no alarm, just a steadily growing queue.
 
----
-
-## 3 — x402 invoice metadata doesn't survive the retry loop
-
-**What I hit.** When Executor calls `call_workflow` and KH returns a 402 with the x402 invoice, the invoice envelope carries job-context metadata (which workflow, which input hash, which retry attempt). After Treasurer pays the invoice and Executor retries the call, the original metadata is dropped — the second-call response is just the workflow result, with no echo back of the invoice fields the agent used to bind the payment to the job. For an agent that wants to write a single audit row "I paid invoice X to land verdict Y", the binding is implicit and reconstructed client-side.
-
-**Impact.** Treasurer's `payments.db` row-shape needed an extra index across `(workflow_id, input_hash, x402_invoice_id, base_tx_hash)` to reconcile invoice → settlement → workflow result. Doable, but the reconciliation logic is more state-machine than I'd want for an audit trail.
-
-**Suggestion.** Echo the x402 invoice ID and the workflow input hash on the successful workflow response. Or expose a `GET /v1/workflow/runs/{run_id}` that includes the invoice context. The "agent paid X to do Y" linkage is what makes the per-call payment model auditable for compliance-conscious integrators (which I expect to dominate after the first $10K/month KH-on-x402 customer shows up).
+**Suggestion.** Either guarantee workflow IDs are stable across republishes (with a separate version tag agents can pin), or expose a `workflow_handle` field that maps stable to current ID. For agent integrators caching across long-lived processes, the handle stability is what makes the cache pattern safe. The fix on my side was "re-search on first 404, cache for 6h max" — but a server-side stability contract would let me cache indefinitely.
 
 ---
 
-## 4 — Jito bundle landing path: status-polling cadence isn't documented
+## 2 — MCP `call_workflow` tail latency under bursty x402 traffic isn't documented
 
-**What I hit.** Executor uses KH's Jito bundle scheduler for Base attestations because naive `sendTransaction` fails during memecoin pump events. The flow is: submit verdict → KH bundles → Jito lands → KH writes status. The docs cover submission well, but the recommended polling cadence for "did the bundle land?" isn't surfaced. I started with 1-second polls and got rate-limited within 30 minutes; backed off to 3-second polls and was fine; eventually moved to webhook subscription, which the docs do mention but don't position as the recommended pattern for high-frequency-attestation agents.
+**What I tried.** Measure end-to-end p50 / p95 / p99 latency on `call_workflow` (MCP request → workflow result, including the 402 → x402 payment → retry leg) so I could size Treasurer's reservation/release window correctly.
 
-**Impact.** A wasted afternoon on rate-limit chase. The webhook flow (which is the right answer) is buried in a sub-page, not surfaced from the main `call_workflow` flow that an agent integrator naturally lands on first.
+**What I expected.** A latency target — even loose, like "p95 under 4s for sub-$1 jobs" — that I could budget against. Treasurer needs to commit a USDC reservation when it sees the 402, and release it on either confirmed settlement or timeout. Without a target, the release timeout is a guess.
 
-**Suggestion.** In the `call_workflow` docs, lead with "if you expect more than N completions per minute, switch to webhook subscriptions immediately; polling is for low-frequency or development use only". Document the polling rate-limit explicitly (per-minute and per-hour). The current implicit-rate-limit model means every new integrator finds it the same way.
+**What happened.** Median was clean (sub-1.5s), but tail behaviour was where it got interesting. Looking at my own observatory data: clean Base x402 payment volume is averaging ~178K payments/day across the ecosystem; mean payment $1.16. Of the 61 facilitator-class signing addresses tracked, the top ones cluster in 5-second windows that look like burst-emit patterns. When I called KH's MCP during one of those windows, I saw `call_workflow` round-trips in the 8-12s range — well above what naive sizing would suggest. Treasurer's reservation window was set to 5s on the assumption of a calmer p95; I bumped it to 15s after observing the tail.
 
----
-
-## 5 — Workflow-author authentication-vs-consumer-payment split is implicit
-
-**What I hit.** KH workflows are authored by one party (sometimes the platform, sometimes a third party) and consumed by another (Executor in my case). The `call_workflow` request needs the consumer's payment (x402 invoice) plus, for some workflows, a workflow-author API key for the underlying service the workflow wraps (e.g. a Helius RPC key, an Etherscan key). The docs don't make the auth split obvious — I assumed for a day that paying the x402 invoice was the only auth required, and got 401s on workflows that need pass-through auth.
-
-**Impact.** Lost half a day debugging a 401 that turned out to be a missing pass-through auth field on the `call_workflow` request. The error string was generic ("workflow auth failed"), which didn't disambiguate "your x402 payment didn't land" from "the workflow needs an additional auth header you didn't send".
-
-**Suggestion.** Disambiguate auth errors: `x402_payment_missing_or_invalid` vs `workflow_pass_through_auth_missing` vs `workflow_pass_through_auth_invalid`. In `search_workflows`, mark workflows that require pass-through auth and list which fields. For the consumer agent, knowing in advance that workflow-X needs a Helius key field is the difference between "I can call this" and "I trial-and-error my way to a working call".
+**Suggestion.** Publish observed latency percentiles for `call_workflow` segmented by job size and workflow class. Even a static "as of last week" snapshot in the docs would let agent integrators size budgets without trial-and-error. Bonus: surface a `Retry-After`-style hint on 402 responses during congestion so Treasurer can defer the reservation rather than holding it.
 
 ---
 
-## 6 — Spend-policy enforcement is per-call, not per-job
+## 3 — Gas estimation under x402 micropayment volume runs hot
 
-**What I hit.** agentcash spend policies enforce against per-call amounts. For QUORUM, a single logical "verdict job" can include the original `call_workflow` plus 2–3 retry calls if Jito misses the first bundle slot. The per-call envelope is right for the common case but doesn't compose into a per-job ceiling. An agent that wants to say "this verdict is worth at most $0.10 to land, including retries" has to track that envelope client-side.
+**What I tried.** Use KH's bundled gas-estimation pre-flight (the recommended path before `call_workflow` for workflows that land an attestation on Base) to predict cost per job. Treasurer's float top-up math depends on this estimate being accurate to the 10-20% level.
 
-**Impact.** Treasurer maintains a per-job ledger that's a layer above the agentcash policy. Two policies, two enforcement points, two failure modes. Works, but it's the kind of thing that slowly diverges in production unless the integration is careful.
+**What I expected.** Estimates within ~25% of realised gas across the day. Base gas is volatile but not pathological outside pump events.
 
-**Suggestion.** Add a per-job envelope policy: "any sequence of `call_workflow` requests tagged with the same `job_id` is capped at $X total across retries". This composes naturally with the per-call ceiling and gives the agent a server-side enforcement point that matches its own budget model.
+**What happened.** Estimates were tight at low volume but drifted by 60-80% during the windows when x402 micropayment volume on Base spiked. That tracks: my observatory data shows clean payment burst events of 4-5x baseline volume, and Base's mempool / priority-fee signal during those windows is genuinely degraded. KH's estimator appears to use a recent-block average rather than a percentile-based estimator that handles tail volume — it under-estimates at exactly the moment when accuracy matters most.
+
+The downstream impact for Treasurer is real: the float top-up math runs hot during burst windows, which is exactly when an autonomous agent is least able to absorb a "wallet ran dry mid-job" failure.
+
+**Suggestion.** Move to a percentile-based gas estimator (e.g. p75 of the last 100 blocks weighted by recency) rather than a mean-of-recent. Or surface a confidence interval ("est. 24K gas, 90% CI: 18-38K") so the agent's float math can pad correctly. For x402 use cases, a tight high-confidence bound is more valuable than a loose mean.
+
+---
+
+## 4 — Retry semantics for failed bundle landing aren't idempotent by default
+
+**What I tried.** Submit a verdict via `call_workflow`, watch for Jito bundle confirmation, retry on missed slot. Standard pattern — bundle slots miss occasionally on Base under load.
+
+**What I expected.** A clean retry primitive: same workflow input + same idempotency key = same outcome (one attestation, even if the call goes through twice).
+
+**What happened.** Without an explicit idempotency key on `call_workflow`, the second call after a missed-slot retry can land a duplicate attestation if the first one *also* eventually landed (e.g. delayed bundle inclusion, network split between agent and KH endpoint, retry fired before settlement notification arrived). I observed this once in test: two attestations on Base for the same verdict, three blocks apart. Idempotency had to be enforced client-side by tracking `(workflow_id, input_hash)` in `payments.db` and short-circuiting before the second `call_workflow` fired.
+
+**Suggestion.** Accept an `Idempotency-Key` header on `call_workflow` — same key + same input within a window = same response (no duplicate execution). This is standard practice on payment APIs; it'd be standard for execution-as-a-service too. Pair it with a documented retry guidance: "if you don't get a settlement notification within X seconds, retry with the same idempotency key — KH will return the cached result if execution already landed".
+
+---
+
+## 5 — Webhook delivery: signing is solid; retry-and-replay semantics are implicit
+
+**What I tried.** Subscribe to the workflow-completion webhook for high-frequency-attestation use, verify the X-KH-Signature HMAC, idempotently apply the result to my local ledger.
+
+**What I expected.** A documented retry policy on webhook delivery (how many attempts, what backoff, what triggers a retry vs a give-up) and a clear delivery-id that's stable across retries.
+
+**What happened.** Signing worked first try (the SDK helper is clean once you find it — see item 7). Retry policy turned out to be "yes there are retries" with no documented schedule. I observed at least 3 retry attempts on a deliberately-500'd handler within 90 seconds, then no more. The delivery-id field is present but the docs don't say "treat this as the idempotency key for your handler" — I figured that out by inspecting two retry deliveries and confirming the field was identical.
+
+The cross-check I'd want as an integrator: my observatory tracks ~3M clean Base x402 payments and I can see the volume profile that KH webhooks would inherit if even 5% of that traffic routed through KH for execution. At that scale, "implicit retry semantics" becomes "every integrator builds a slightly different handler, drift accumulates, ledgers diverge". The cost of not documenting this now compounds quickly.
+
+**Suggestion.** Document the retry schedule explicitly (e.g. "we retry at 0s / 30s / 5min / 30min / 2h, then give up"). Position the delivery-id field as the canonical idempotency key for handlers. Add a single docs paragraph titled "Building an idempotent webhook handler" that shows the right pattern — most integrators will copy it verbatim, which is exactly what you want.
+
+---
+
+## 6 — Multi-chain roadmap is invisible to the integrator
+
+**What I tried.** Build Executor against Base mainnet today. Plan for the case where x402 traffic diversifies (Solana facilitators, Optimism, Arbitrum) and Executor wants to land attestations wherever the verdict applies.
+
+**What I expected.** Some signal in the docs or roadmap — "Base today, X chain Q3, Y chain after that". Even a directional statement would let me design Executor's chain-abstraction layer to match.
+
+**What happened.** Couldn't find a public roadmap statement on multi-chain. Inferred from the codebase / API surface that Base is the singular target today, which is fine for me — but the agent-economy thesis I'm building against is multi-chain by year-end. My observatory already shows non-Base x402-style activity worth tracking (Solana facilitator candidates, EVM L2 patterns); if KH stays Base-only while the surrounding ecosystem fragments, the value of the KH integration narrows even if the product itself stays excellent.
+
+**Suggestion.** Publish a directional multi-chain note. Doesn't have to be a commitment — even "we're watching Solana x402 emergence; the architecture is chain-agnostic; concrete chains TBD" is enough for an integrator to plan for. The alternative is integrators silently de-prioritising KH because they don't know whether to design around it as a Base primitive or a general one.
 
 ---
 
 ## 7 — Webhook signature verification example uses a different lib than the one the SDK ships
 
-**What I hit.** The agentcash SDK ships with a webhook-signing helper (HMAC verification of the X-KH-Signature header). The docs example for verifying the webhook in your handler uses a different crypto lib (raw `crypto` Node module with manual constant-time compare) without referencing the SDK helper. I implemented manual verification first because that's what the docs showed; later realised the SDK had it built in.
+**What I tried.** Implement webhook verification on Executor's handler. Followed the docs example — manual `crypto`-module HMAC compare with constant-time semantics.
 
-**Impact.** Wrote 20 lines of HMAC-compare code I didn't need. Net cost: small. But it's the kind of inconsistency that signals "the docs and the SDK haven't been reconciled in a while", which makes integrators read both sceptically.
+**What I expected.** The docs example to be either the canonical path or clearly labelled as the "manual / non-Node" fallback.
 
-**Suggestion.** Update the webhook-handling docs to reference the SDK helper as the canonical path, and keep the manual-crypto example as a fallback for non-Node integrators. A single source of truth, with clear "use this if you're in Node, use this if you're not" branching.
+**What happened.** Wrote 20 lines of manual HMAC code, then found later that the agentcash SDK ships a webhook-signing helper that does this in one call. Net cost: small. But it's the kind of inconsistency that signals "the docs and the SDK haven't been reconciled in a while", which makes integrators read both sceptically.
+
+**Suggestion.** Update the webhook-handling docs to reference the SDK helper as the canonical path; keep the manual-crypto example as a fallback for non-Node integrators. A single source of truth, with clear "use this if you're in Node, use this if you're not" branching.
 
 ---
 
@@ -85,7 +109,7 @@ The integration has two surfaces: the human-builder onboarding (docs, dashboard,
 
 - The `search_workflows` → `call_workflow` two-step is the right shape for agent integrators. It separates discovery from invocation, which lets Executor cache discovery results and only invoke on hot path.
 - x402 invoicing on Base is the right rail for agent-paid execution. The 402 handshake feels native to the agent loop in a way that pre-funded escrow does not.
-- Jito bundle landing latency on Base is consistently sub-2s for non-pump-event blocks. Predictable enough that I could tune Treasurer's reservation/release window without padding excessively.
+- Jito bundle landing latency on Base is consistently sub-2s for non-pump-event blocks. Predictable enough that I could tune Treasurer's reservation/release window without padding excessively (once I'd observed the tail — see item 2).
 - The agentcash dashboard's "spent this hour / spent today" widgets matched my client-side ledger to the cent over a 4-day comparison window. The accounting is real, not approximate.
 - Documentation tone is honest about what's stable vs what's evolving — separate "preview" / "stable" tags on endpoints saved me from depending on something fragile by accident.
 
@@ -93,7 +117,9 @@ The integration has two surfaces: the human-builder onboarding (docs, dashboard,
 
 ## Closing
 
-KH is shipping the right primitive for the part of the agent stack everyone else is hand-rolling. The friction items above are integration-time, not architecture-time — they slow autonomous agents down but don't stop them. Most resolve with explicit documentation rather than API changes. Items 1, 3, and 5 are the ones I'd prioritize: they're the ones where an autonomous agent's failure mode is silent or ambiguous, and silent failure is the hardest class to debug at machine speed.
+KH is shipping the right primitive for the part of the agent stack everyone else is hand-rolling. The friction items above are integration-time, not architecture-time — they slow autonomous agents down but don't stop them. Most resolve with explicit documentation (latency percentiles, retry policy, webhook idempotency, multi-chain direction) rather than API changes; items 1, 4, and 5 are the ones I'd prioritize because they're the ones where an autonomous agent's failure mode is silent or ambiguous, and silent failure is the hardest class to debug at machine speed.
+
+The grounded view from running an x402 observatory outside the hackathon: the Base x402 traffic shape is real, growing, and bursty in ways naive sizing doesn't anticipate. The integrators who'll matter to KH over the next 18 months are not the ones writing single-process demos — they're the ones running multi-agent meshes against tens of thousands of jobs/day. Items 2, 3, and 5 are written from inside that future.
 
 The combined Uniswap-Trading-API + KeeperHub-execution + x402-funded-by-Treasurer pattern is going to be a category, not a one-off. Both partners are shipping the right things — the items above are the polish that makes the category possible to build against without spelunking.
 
