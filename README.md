@@ -33,7 +33,7 @@ Scout ──► Judge ──► Verifier ──► Executor ──► Base attes
 | Scout | Watches 14 Solana smart-money wallets, cross-refs EVM bridge graph | Helius WS + bridge-linker scaffold (commit `dbf4367`) |
 | Judge | 10-feature classifier (6 Solana-native, 2 cross-chain, 2 token-structural) | Backtest target ≥70% precision on Solana-native subset |
 | Verifier | Validates Judge verdicts against on-chain reality before attestation | **38 tests, CI green** (`agents/verifier/verifier.test.ts`) |
-| Executor | Posts attestations to Base via KeeperHub Jito bundles | First receipt on-chain (see above) |
+| Executor | Posts attestations to Base via KeeperHub MCP `call_workflow` | First receipt on-chain (see above) |
 | Treasurer | Holds USDC float, pays per-call in x402, swaps via Uniswap Trading API | **7 integration tests, CI green** (`agents/treasurer/test/uniswap-client.test.ts`) |
 
 ---
@@ -62,7 +62,7 @@ For the cross-host deploy (Frankfurt + NYC), see `infra/deploy-vps.sh`.
 
 ## Discipline notes
 
-- **Retraction discipline**: I caught a numerator/denominator filter mismatch in the data-coverage figures and shipped the correction publicly (commit `550cf5e`, classified-subset 32.7% → 13.0%). Numbers in this repo are corrected when they're wrong; history is logged inline at smartflowproai.substack.com.
+- **Retraction discipline**: I caught a numerator/denominator filter mismatch in the data-coverage figures and shipped the correction publicly (commit `550cf5e`, classified-subset 32.7% → 13.0%). Backfill has since progressed monotonically to 15.01% as of 2026-04-30 16:10 UTC (locked in `lockfile-2026-04-30-evening.json`). Numbers in this repo are corrected when they're wrong; history is logged inline at smartflowproai.substack.com.
 - **Start Fresh**: every agent in this repo was written 2026-04-24 → 2026-05-03 inside the OpenAgents build window. The three public datasets I lean on (x402 mapper, EVM wallet graph, Solana copy-bot archive) are pre-existing public infra — see [DATA-COVERAGE.md](./DATA-COVERAGE.md) for the honest breakdown.
 
 ---

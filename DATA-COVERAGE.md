@@ -2,7 +2,7 @@
 
 Explicit per-chain breakdown of every dataset QUORUM reads from. If a number appears in the README, the demo video, or a partner write-up, its origin is listed here.
 
-**Last verified**: 2026-04-27 (numbers locked in `numbers-ground-truth-lockfile-2026-04-28`; live DB check on author's infrastructure).
+**Last verified**: 2026-04-30 16:10 UTC (numbers locked in `lockfile-2026-04-30-evening.json`; regenerated from `payments.db` on author's infrastructure). Supersedes earlier `numbers-ground-truth-lockfile-2026-04-28` lock.
 
 ---
 
@@ -26,10 +26,19 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 
 ## 3. x402 Endpoint Mapper (`mapper.db`)
 
-- **Size**: 22,043 registered endpoints (snapshot 2026-04-27 lockfile).
+- **Size**: 22,054 registered endpoints (canonical figure used across SUBMISSION / FEEDBACK / JUDGE_INTRO; snapshot fed forward from 2026-04-29 mapper run).
 - **Chain composition**: **99.9% EVM (Base + Ethereum + misc EVM L2s) / 0.78% Solana**. Publicly reported.
 - **Source**: author's x402 network mapper, authored 2026-Q1 through 2026-04-17.
 - **What QUORUM uses it for**: pitch-level ecosystem context only ("agent economy has a trust crisis"). Not a runtime data source for agent logic.
+
+## 3b. x402 Payment Index (`payments.db`)
+
+- **Size at lock 2026-04-30 16:10 UTC**: 6,448,184 raw Base x402 payment candidates over an 18.4-day window (2026-04-12 09:05 → 2026-04-30 18:02 UTC).
+- **After wash filter**: 3,409,612 clean payments (47.1% removed as self-referential / dust / burst-pattern noise).
+- **Classified subset** (`is_facilitator_mediated IS NOT NULL` within clean): 511,716 = 15.01% of clean. Of those: 169,740 mediated (=1) / 341,976 P2P (=0).
+- **Wallet diversity (clean)**: 439,113 distinct from-wallets, 408,859 distinct to-wallets.
+- **Mean payment**: $1.14.
+- **Backfill progress note**: 13.0% (29.04 09:19 UTC) → 15.01% (30.04 16:10 UTC). Monotonic backfill against Base RPC `eth_getTransactionByHash`; the gap to 100% is a backfill rate problem, not a query problem. The 29.04 lock published at smartflowproai.substack.com (commit `550cf5e`) is superseded by `lockfile-2026-04-30-evening.json`.
 
 ## 4. ERC-8004 Registry (read via 8004scan API)
 
