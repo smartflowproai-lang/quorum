@@ -1,0 +1,40 @@
+{
+  "lock_timestamp_pl": "2026-04-30T18:10",
+  "lock_timestamp_utc": "2026-04-30T16:10",
+  "source_db": "/root/x402-payment-tracker/payments.db",
+  "data_window": {
+    "min_ts_utc": "2026-04-12T09:05:21Z",
+    "max_ts_utc": "2026-04-30T18:02:52Z",
+    "span_days": 18.4
+  },
+  "raw_counts": {
+    "total_payments": 6448184,
+    "wash_null_clean": 3409612,
+    "wash_null_classified": 511716,
+    "wash_null_mediated_1_facilitator": 169740,
+    "wash_null_mediated_0_p2p": 341976,
+    "distinct_from_wallets_clean": 439113,
+    "distinct_to_wallets_clean": 408859,
+    "mean_amount_usdc": 1.14
+  },
+  "derived": {
+    "classified_pct_of_clean": 15.01,
+    "wash_filter_reduction_pct": 47.10,
+    "daily_clean_payments": 185304
+  },
+  "supersedes": {
+    "smartflowproai_substack_29_04_correction": {
+      "classified_pct": 13.0,
+      "classified_count": 392556,
+      "lock_commit": "550cf5e",
+      "as_of": "2026-04-29T09:19Z"
+    },
+    "earlier_30_04_draft": {
+      "classified_pct": 14.5,
+      "classified_count": 489519,
+      "as_of": "2026-04-30T morning UTC"
+    }
+  },
+  "method": "wash_flag IS NULL = clean subset; classified subset = is_facilitator_mediated IS NOT NULL within clean; balance still mid-backfill against Base RPC eth_getTransactionByHash",
+  "note": "Backfill progressed monotonically: 13.0% (29.04 09:19) -> 14.5% (30.04 morning) -> 15.01% (30.04 16:10). All deltas are backfill progress, not query bugs."
+}

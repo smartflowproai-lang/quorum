@@ -42,13 +42,15 @@ Here's where I'm being narrow about claims I can prove on-chain right now. I'm n
 
 The interesting positioning isn't the volume — it's the integration shape. Treasurer demonstrates pay-with-any-token end-to-end on real x402 traffic: an autonomous agent that converts whatever it has into whatever the next service wants, on demand, without a human signing anything. That maps directly onto the Uniswap Trading API's stated design intent.
 
-Real x402 traffic context (my own observatory, 17-day window 2026-04-12 → 2026-04-29 inclusive; numbers verified live against `payments.db` + `mapper.db` on 2026-04-29 09:19 UTC; methodology in `DATA-COVERAGE.md`; final pre-submit refresh planned 2026-05-02):
+Real x402 traffic context (my own observatory, 18.4-day window 2026-04-12 09:05 → 2026-04-30 18:02 UTC; numbers regenerated live against `payments.db` 2026-04-30 16:10 UTC and locked in `lockfile-2026-04-30-evening.json`; methodology in `DATA-COVERAGE.md`):
 
 - 22,054 x402 endpoints catalogued across three primary registries plus tail sources
-- 5,877,367 raw Base x402 payment candidates → 3,028,345 clean payments after wash filter (48.5% removed as self-referential / dust / burst-pattern noise)
-- ~401K distinct from-wallets, ~373K distinct to-wallets across clean payments, mean payment $1.16
+- 6,448,184 raw Base x402 payment candidates → 3,409,612 clean payments after wash filter (47.1% removed as self-referential / dust / burst-pattern noise)
+- 439,113 distinct from-wallets, 408,859 distinct to-wallets across clean payments, mean payment $1.14
 - 61 facilitator-class signing addresses tracked (54 mapped Coinbase CDP + 7 pattern-inferred candidates — including a single high-volume unlabelled facilitator likely Bankr or Mogami, documented in methodology)
-- Caveat upfront: facilitator-vs-P2P classification currently complete for 13.0% / 392,556 of the clean subset (consistent with the n=200 sample baseline of 13.3% from 2026-04-28; the `eth_getTransactionByHash` backfill against Base RPC is progressing incrementally); the 87.0% balance is still mid-backfill. The facilitator-vs-P2P split holds only on the classified subset. Methodology and number-history at smartflowproai.substack.com (corrections logged inline)
+- Caveat upfront: facilitator-vs-P2P classification currently complete for 15.01% / 511,716 of the clean subset; the 84.99% balance is still mid-backfill against Base RPC `eth_getTransactionByHash`. The facilitator-vs-P2P split holds only on the classified subset. Methodology and number-history at smartflowproai.substack.com (corrections logged inline).
+
+**Update 2026-04-30 16:10 UTC — backfill progress note**: this submission lock supersedes the 2026-04-29 numbers (13.0% / 392,556) referenced in commit `550cf5e`. The progression 13.0% (29.04 09:19) → 14.5% (30.04 morning, internal draft) → 15.01% (30.04 16:10, this lock) reflects monotonic backfill progress, not query corrections. The same `wash_flag IS NULL` denominator (3,409,612 today vs 3,028,345 on 29.04) is used throughout — the denominator grew because new clean payments were indexed during the window, not because the query changed. Lockfile in repo: `lockfile-2026-04-30-evening.json`.
 
 Pay-with-any-token sits in front of that traffic. Treasurer is one agent on the rail today — the goal isn't to be the only one, it's to be the reference shape for the next thousand.
 
