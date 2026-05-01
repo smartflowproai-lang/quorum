@@ -29,43 +29,101 @@ export const BASE_CHAIN_ID = 8453 as const;
 // MCP search_workflows
 // ---------------------------------------------------------------------------
 
-export const WorkflowSearchHitSchema = z.object({
-  /** Stable handle if KH ships it; falls back to id today. See FEEDBACK item 1. */
-  workflow_handle: z.string().optional(),
-  id: z.string().min(1),
-  name: z.string(),
-  version: z.string().optional(),
-  description: z.string().optional(),
-  /** USDC denominated price-per-call as decimal string, optional. */
-  price_usdc: z.string().optional(),
-});
+/**
+ * Workflow hit. Two real-world shapes feed this schema:
+ *   - mock-kh-server: { id, name, workflow_handle, price_usdc, ... }
+ *   - real KH MCP:    { id, name, listedSlug, priceUsdcPerCall, ... }
+ * The preprocessor below normalises real-shape fields to mock-shape names so
+ * the rest of the wire sees a single hit type.
+ */
+const WorkflowSearchHitInputSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string(),
+    description: z.string().optional(),
+    version: z.string().optional(),
+    /** Mock shape. */
+    workflow_handle: z.string().optional(),
+    price_usdc: z.string().optional(),
+    /** Real-KH shape. */
+    listedSlug: z.string().optional(),
+    priceUsdcPerCall: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+export const WorkflowSearchHitSchema = z.preprocess((raw) => {
+  if (!raw || typeof raw !== 'object') return raw;
+  const r = raw as Record<string, unknown>;
+  return {
+    ...r,
+    workflow_handle: r.workflow_handle ?? r.listedSlug,
+    price_usdc:
+      r.price_usdc ?? (r.priceUsdcPerCall == null ? undefined : r.priceUsdcPerCall),
+  };
+}, WorkflowSearchHitInputSchema);
 export type WorkflowSearchHit = z.infer<typeof WorkflowSearchHitSchema>;
 
-export const WorkflowSearchResultSchema = z.object({
-  hits: z.array(WorkflowSearchHitSchema),
-});
+/**
+ * Search result. Mock returns `{ hits }`, real KH returns `{ items, total, page, limit }`.
+ * Preprocess into a single canonical `{ hits }` view.
+ */
+export const WorkflowSearchResultSchema = z.preprocess((raw) => {
+  if (!raw || typeof raw !== 'object') return raw;
+  const r = raw as Record<string, unknown>;
+  if (Array.isArray(r.hits)) return { hits: r.hits };
+  if (Array.isArray(r.items)) return { hits: r.items };
+  return raw;
+}, z.object({ hits: z.array(WorkflowSearchHitSchema) }));
 export type WorkflowSearchResult = z.infer<typeof WorkflowSearchResultSchema>;
 
 // ---------------------------------------------------------------------------
 // MCP call_workflow
 // ---------------------------------------------------------------------------
 
-/** Outcome of a single call_workflow invocation. */
-export const CallWorkflowResultSchema = z.object({
-  /** Status returned by KH MCP. */
-  status: z.enum(['settled', 'pending', 'failed', 'duplicate']),
-  /** KH-side execution id (stable; usable as audit handle). */
-  execution_id: z.string().min(1),
-  /** Optional on-chain attestation tx hash if landed synchronously. */
-  attestation_tx: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{64}$/)
-    .optional(),
-  /** Optional human-readable error code on failed status. */
-  error: z.string().optional(),
-  /** Optional latency hint surfaced by KH for backpressure (FEEDBACK item 2). */
-  retry_after_ms: z.number().int().nonnegative().optional(),
-});
+/**
+ * Outcome of a single call_workflow invocation.
+ *
+ * Two upstream shapes feed this schema:
+ *   - mock-kh-server: { status: settled|pending|failed|duplicate, execution_id, attestation_tx? }
+ *   - real KH MCP:    { status: success|error, executionId, output?, error? }
+ * The preprocessor maps real-shape fields onto the canonical wire types.
+ */
+const CallWorkflowResultInputSchema = z
+  .object({
+    status: z.enum(['settled', 'pending', 'failed', 'duplicate']),
+    execution_id: z.string().min(1),
+    attestation_tx: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{64}$/)
+      .optional(),
+    error: z.string().optional(),
+    retry_after_ms: z.number().int().nonnegative().optional(),
+  })
+  .passthrough();
+
+export const CallWorkflowResultSchema = z.preprocess((raw) => {
+  if (!raw || typeof raw !== 'object') return raw;
+  const r = raw as Record<string, unknown>;
+  // Real-KH status mapping
+  let status = r.status;
+  if (status === 'success') status = 'settled';
+  else if (status === 'error') status = 'failed';
+  else if (status === 'pending' || status === 'queued' || status === 'running')
+    status = 'pending';
+  // Real-KH camelCase id
+  const execution_id = r.execution_id ?? r.executionId;
+  // attestation_tx may live under output.txHash for write workflows; best-effort
+  let attestation_tx = r.attestation_tx;
+  const output = r.output as Record<string, unknown> | undefined;
+  if (!attestation_tx && output) {
+    const candidate = output.txHash ?? output.transactionHash ?? output.tx_hash;
+    if (typeof candidate === 'string') attestation_tx = candidate;
+  }
+  // Coerce error to string when present
+  let error = r.error;
+  if (error != null && typeof error !== 'string') error = JSON.stringify(error);
+  return { ...r, status, execution_id, attestation_tx, error };
+}, CallWorkflowResultInputSchema);
 export type CallWorkflowResult = z.infer<typeof CallWorkflowResultSchema>;
 
 // ---------------------------------------------------------------------------
