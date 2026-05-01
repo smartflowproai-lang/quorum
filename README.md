@@ -4,6 +4,19 @@ Five agents on a multi-continent AXL mesh, paying each other in x402, posting ru
 
 ETHGlobal OpenAgents · MIT · built by Tom Smart
 
+[![CI](https://github.com/smartflowproai-lang/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowproai-lang/quorum/actions) · [Live status dashboard](https://quorum.smartflowproai.com) · [BaseScan receipt](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
+
+---
+
+## What a judge sees in 60 seconds
+
+- **5 agents physically separated** across two continents — Scout + Judge in Frankfurt, Verifier + Executor + Treasurer in NYC. Not 5 functions in one process.
+- **Verdicts signed twice** — Judge in Frankfurt + Verifier in NYC, both ed25519, both committed in the on-chain attestation payload before settlement.
+- **73 live KH `call_workflow` executions** logged at [`logs/d6-keeperhub-wire-verify.log`](./logs/d6-keeperhub-wire-verify.log) against `app.keeperhub.com` MCP, retry distribution 71×1 / 1×2 / 1×3.
+- **Real x402 challenge captured** from KH paid workflow at [`logs/d8-kh-x402-challenge-response.json`](./logs/d8-kh-x402-challenge-response.json) — schema matches QUORUM's `X402Challenge` type one-for-one (built before the challenge was captured).
+- **Real chaos test artifact**: [`infra/chaos-axl-failover.sh`](./infra/chaos-axl-failover.sh) + [`logs/d8-chaos-recovery.log`](./logs/d8-chaos-recovery.log) + [`logs/d8-axl-mesh-current-state.json`](./logs/d8-axl-mesh-current-state.json) (live snapshot showing same Frankfurt pubkey two days after the test, mesh still ESTAB on port 58252 sequence 3282).
+- **Methodology before numbers** — public retraction at [Weekly Intel #2: I Published a Wrong Number](https://smartflowproai.substack.com), numbers locked in [`lockfile-2026-04-30-evening.json`](./lockfile-2026-04-30-evening.json).
+
 ---
 
 ## On-chain receipt — Base mainnet

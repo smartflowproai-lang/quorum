@@ -99,6 +99,22 @@ I used Claude Code (Anthropic) for scaffolding, code review, and documentation d
 
 ---
 
+## Live evidence anchors (judges can verify in 60 seconds)
+
+Every claim above maps to a checked-in artifact a judge can open without running anything:
+
+| Claim | Anchor | What it proves |
+|---|---|---|
+| 73 settled KH `call_workflow` executions vs `app.keeperhub.com` MCP | [`logs/d6-keeperhub-wire-verify.log`](./logs/d6-keeperhub-wire-verify.log) (96 KB) | Real live verifications, not mock. Retry distribution 71×1 / 1×2 / 1×3, latency 1-3 s clean / 8-12 s with transient backoff |
+| KH MCP returns spec-compliant x402 on a paid workflow | [`logs/d8-kh-x402-challenge-response.json`](./logs/d8-kh-x402-challenge-response.json) | Captured 2026-05-01T21:20Z against `pack-0-10-demo` ($0.10 USDC, Base mainnet). Full `accepts` array + payTo + amount, exactly matching QUORUM's `X402Challenge` type defined before the call |
+| Multi-continent mesh stable through hackathon | [`logs/d8-axl-mesh-current-state.json`](./logs/d8-axl-mesh-current-state.json) | Live `/topology` snapshot 2026-05-01T21:14Z showing same Frankfurt pubkey + active ESTAB to NYC on port 58252 sequence 3282, two days after the chaos test |
+| Chaos test was real, not slideware | [`logs/d8-chaos-recovery.log`](./logs/d8-chaos-recovery.log) + [`infra/chaos-axl-failover.sh`](./infra/chaos-axl-failover.sh) + [`CHAOS-TEST.md`](./CHAOS-TEST.md) | Three distinct ephemeral ports (47438 → 41648 → 58252) on the connection log = trail of three real reconnects. Reproducible 9-min script committed |
+| Uniswap chain-support gating fires before chainId validation | [`logs/d8-uniswap-chainid-probe.log`](./logs/d8-uniswap-chainid-probe.log) | Live re-probe 2026-05-01T21:21Z of `chainId 84532` vs `8453` against `trade-api.gateway.uniswap.org/v1/quote`, both returned identical 401 with distinct requestIds — auth fires first |
+| First on-chain Treasurer receipt | [`0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849) | Block 45,300,516 · Base mainnet · 1 USDC → WETH via Universal Router + Permit2. Same path Treasurer drives programmatically |
+| `axl-wrap.ts` is MIT-tagged, dependency-free, PR-ready | [`shared/axl-wrap.ts`](./shared/axl-wrap.ts) header | SPDX-License-Identifier: MIT, zero deps beyond `fetch`, copy-paste-ready into any TS project. PR-ready when Gensyn opens an AXL upstream |
+
+---
+
 ## Build evidence — commits
 
 | Date | Commit | What landed |
