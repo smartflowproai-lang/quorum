@@ -1,0 +1,38 @@
+WARN: UNISWAP_API_KEY not in env, will hit unauthenticated request
+=== Test A: chainId 84532 (Base Sepolia) /v1/quote ===
+HTTP/2 401 
+date: Fri, 01 May 2026 21:21:28 GMT
+content-type: application/json
+content-length: 105
+cf-ray: 9f51d608fe5cd36d-FRA
+cf-cache-status: DYNAMIC
+server: cloudflare
+strict-transport-security: max-age=15552000; includeSubDomains; preload
+vary: Origin
+apigw-requestid: ctDl5jrHCYcEPbw=
+x-error-id: ctDl5jrHCYcEPbw=
+set-cookie: __cf_bm=m2gs.EYRSEZxxUDIMWc2uqbiaPg5spwb9tiAft8r75U-1777670488.4760902-1.0.1.1-uwMfLZFjisAo1eYmUMLZX1P.xV0VFLsySm1KpSf.JNFv3coryxGQr8WUEG3DELf0F_mtKt6_VZ0iJIxPoNSW0Irc46gqHDpEB4BtwlaxZZ5YAdnCQS1hCFWksHV3QihS; HttpOnly; Secure; Path=/; Domain=uniswap.org; Expires=Fri, 01 May 2026 21:51:28 GMT
+set-cookie: __cfseq-0I59q9Md-=UQgksSA9uoKqZ-SVF-qYk5zJGGEsfk8iRGJTYLsC3DRI69OOFIt4LSYG8mAIRxaesio; HttpOnly; Secure; Path=/; Domain=uniswap.org; Expires=Fri, 01 May 2026 22:21:28 GMT
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=xPN4xfMdv5XoTmo8y23PIaVUhs0KBpOhjvVUOdvxJSsbbzKeRipBt8aOq0NBqB6YCmhdUrcxBhzIEEwP2ypEDrDaRfE67tFOyGQ7Hus35NePm1YJ9LyVfpsdfVXO%2B3YSZrOraGBU10u6bipVMlpw"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.01,"max_age":604800}
+
+{"errorCode":"Unauthorized","detail":"Unauthenticated api key or session","requestId":"ctDl5jrHCYcEPbw="}
+=== Test B: chainId 8453 (Base mainnet) /v1/quote ===
+HTTP/2 401 
+date: Fri, 01 May 2026 21:21:28 GMT
+content-type: application/json
+content-length: 105
+cf-ray: 9f51d60a78938d30-FRA
+cf-cache-status: DYNAMIC
+server: cloudflare
+strict-transport-security: max-age=15552000; includeSubDomains; preload
+vary: Origin
+apigw-requestid: ctDl7iMKCYcEPdQ=
+x-error-id: ctDl7iMKCYcEPdQ=
+set-cookie: __cf_bm=JjJFJiQ8w8d40nFni8jqJjxvPBQDaREbdE.pKp1yVfA-1777670488.71258-1.0.1.1-0rBNKE6McG08VOeuXmXu66B.YyGt5JM2ONkeXlqRDYN7E0wyWoa7ysiZOppdRFH7AkuTpV8iNi4oDvRCuqa2ofn6aQ8uwqgklLW7PHONXsCcEJbPszihWCn6g57t6xB5; HttpOnly; Secure; Path=/; Domain=uniswap.org; Expires=Fri, 01 May 2026 21:51:28 GMT
+set-cookie: __cfseq-0Zk-LEYPc=tXyuItxbhOKshCxYKmF1JFRRoV323fndwkMU89lgG_mIzxNPA-3DTmImiz8X7SFe-Uo; HttpOnly; Secure; Path=/; Domain=uniswap.org; Expires=Fri, 01 May 2026 22:21:28 GMT
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=I0z3gAx1hu66i7Ok0VadJHdnj%2F9F5R13mqeMJydX1GfwgF7Cjqea%2FGJpq9UfgeL4oteS5dX6YWCewQjp7nN1gEG1NhfBsxmzWfGwgOEUpmuh8KUaxqK2qDIZcYqXmfbm7yir6JIbVVKLr%2BPTlnlm"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.01,"max_age":604800}
+
+{"errorCode":"Unauthorized","detail":"Unauthenticated api key or session","requestId":"ctDl7iMKCYcEPdQ="}
+=== Captured at 2026-05-01T21:21:28Z ===
