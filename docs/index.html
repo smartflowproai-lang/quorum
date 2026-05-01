@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QUORUM — Live Dashboard</title>
+<meta name="description" content="QUORUM live status: 5 agents, multi-continent AXL mesh, real KH executions, on-chain attestations on Base mainnet">
+<style>
+*,*:before,*:after{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#050810;color:#e8eef2;font-family:-apple-system,"SF Pro Text",Helvetica,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding:48px 32px}
+header{border-bottom:1px solid #1a2538;padding-bottom:32px;margin-bottom:48px}
+h1{font-size:64px;font-weight:800;letter-spacing:-2px;margin:0 0 8px;background:linear-gradient(135deg,#c8e84a,#76e1a9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tagline{font-size:20px;opacity:.75;margin:0}
+.byline{font-size:14px;opacity:.5;margin-top:16px;letter-spacing:1px;text-transform:uppercase}
+section{margin-bottom:48px}
+h2{font-size:14px;font-weight:600;color:#76e1a9;letter-spacing:2px;text-transform:uppercase;margin:0 0 24px;border-left:3px solid #c8e84a;padding-left:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.metric{background:#0d1422;border:1px solid #1a2538;border-radius:12px;padding:24px}
+.metric .num{font-size:42px;font-weight:700;color:#c8e84a;line-height:1;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.metric .lbl{font-size:13px;opacity:.7;text-transform:uppercase;letter-spacing:1px}
+.metric .sub{font-size:12px;opacity:.5;margin-top:4px}
+table{width:100%;border-collapse:collapse;background:#0d1422;border:1px solid #1a2538;border-radius:12px;overflow:hidden}
+th,td{padding:14px 20px;text-align:left;border-bottom:1px solid #1a2538;font-size:14px}
+th{background:#131a2e;font-weight:600;color:#76e1a9;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+tr:last-child td{border-bottom:none}
+code{font-family:"SF Mono",Menlo,monospace;font-size:13px;background:#1a2538;padding:2px 6px;border-radius:4px;color:#c8e84a}
+.tx{font-family:"SF Mono",Menlo,monospace;font-size:12px;word-break:break-all}
+a{color:#76e1a9;text-decoration:none;border-bottom:1px solid #1a2538}
+a:hover{border-bottom-color:#76e1a9}
+.status{display:inline-block;width:8px;height:8px;border-radius:50%;background:#76e1a9;margin-right:8px;vertical-align:middle;box-shadow:0 0 8px #76e1a9}
+.status.amber{background:#f0b150;box-shadow:0 0 8px #f0b150}
+footer{border-top:1px solid #1a2538;padding-top:24px;margin-top:64px;font-size:13px;opacity:.6}
+@media(max-width:600px){h1{font-size:42px}.wrap{padding:32px 16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>QUORUM</h1>
+<p class="tagline">5 agents · 2 continents · 1 mesh · verdicts on Base mainnet</p>
+<p class="byline">ETHGlobal OpenAgents · MIT · built by Tom Smart (<a href="https://x.com/TomSmart_ai">@TomSmart_ai</a>)</p>
+</header>
+
+<section>
+<h2>Live status — 2026-05-01</h2>
+<div class="grid">
+<div class="metric"><div class="num">73</div><div class="lbl">Live KH Executions</div><div class="sub">Real <code>call_workflow</code> vs app.keeperhub.com</div></div>
+<div class="metric"><div class="num">11/12</div><div class="lbl">Last Verify Run OK</div><div class="sub">retry distribution 71×1 / 1×2 / 1×3</div></div>
+<div class="metric"><div class="num">38</div><div class="lbl">Verifier Tests Passing</div><div class="sub">CI green, schema + sig + replay coverage</div></div>
+<div class="metric"><div class="num">7</div><div class="lbl">Treasurer Integration Tests</div><div class="sub">Uniswap Trading API + Permit2</div></div>
+</div>
+</section>
+
+<section>
+<h2>Multi-continent AXL mesh</h2>
+<table>
+<thead><tr><th>Node</th><th>Location</th><th>Role</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><code>axl-frankfurt</code></td><td>Frankfurt VPS · 143.244.204.114</td><td>Scout + Judge</td><td><span class="status"></span>Online · TLS:9001 · Yggdrasil-routable</td></tr>
+<tr><td><code>axl-nyc</code></td><td>NYC VPS · 159.65.172.200</td><td>Verifier + Executor + Treasurer</td><td><span class="status"></span>Online · ed25519 peered</td></tr>
+</tbody>
+</table>
+<p style="font-size:13px;opacity:.6;margin-top:12px">Bidirectional roundtrip verified 2026-04-24 · evidence: <code>infra/axl-hello.sh</code> + <code>logs/d1-axl-mesh-live.log</code> · partition-recovery procedure documented in <code>CHAOS-TEST.md</code></p>
+</section>
+
+<section>
+<h2>On-chain receipt — Base mainnet</h2>
+<table>
+<tbody>
+<tr><td><strong>Transaction</strong></td><td><a href="https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849" class="tx">0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849</a></td></tr>
+<tr><td><strong>Block</strong></td><td>45,300,516 · chainId 8453 · 2026-04-28</td></tr>
+<tr><td><strong>Path</strong></td><td>1 USDC → WETH via Universal Router + Permit2 · same path Treasurer drives programmatically</td></tr>
+<tr><td><strong>Wallet</strong></td><td><code>0xd779cE46567d21b9918F24f0640cA5Ad6058C893</code> (tomsmart.base.eth)</td></tr>
+<tr><td><strong>Verification</strong></td><td>Live <code>eth_getTransactionByHash</code> against <code>mainnet.base.org</code></td></tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2>Observatory data substrate</h2>
+<div class="grid">
+<div class="metric"><div class="num">22,054</div><div class="lbl">x402 Endpoints Indexed</div><div class="sub">Cross-chain catalog · 3 primary registries</div></div>
+<div class="metric"><div class="num">6.45M</div><div class="lbl">Raw Base Tx</div><div class="sub">18.4-day window · since 2026-04-12</div></div>
+<div class="metric"><div class="num">3.41M</div><div class="lbl">Clean Payments</div><div class="sub">After 47.1% wash filter</div></div>
+<div class="metric"><div class="num">$1.14</div><div class="lbl">Mean Payment USDC</div><div class="sub">439K from-wallets · 409K to-wallets</div></div>
+</div>
+<p style="font-size:13px;opacity:.6;margin-top:12px">Lockfile snapshot 2026-04-30 16:10 UTC · methodology in <code>DATA-COVERAGE.md</code> · public number-history at <a href="https://smartflowproai.substack.com">smartflowproai.substack.com</a></p>
+</section>
+
+<section>
+<h2>Agents</h2>
+<table>
+<thead><tr><th>Agent</th><th>Location</th><th>Role</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><code>scout</code></td><td>Frankfurt</td><td>Helius WS · 14 Solana smart-money wallets · EVM bridge-linker</td><td><span class="status"></span>Live</td></tr>
+<tr><td><code>judge</code></td><td>Frankfurt</td><td>10-feature classifier · 58,432-event archive backtest</td><td><span class="status"></span>Live</td></tr>
+<tr><td><code>verifier</code></td><td>NYC</td><td>Independent validation · ed25519 attestation · 38 tests green</td><td><span class="status"></span>Live</td></tr>
+<tr><td><code>executor</code></td><td>NYC</td><td>KeeperHub MCP wire · 73 live executions · attestations on Base</td><td><span class="status"></span>Live</td></tr>
+<tr><td><code>treasurer</code></td><td>NYC</td><td>Uniswap Trading API · Permit2 · x402 pay-with-any-token</td><td><span class="status"></span>Live</td></tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2>Discipline</h2>
+<p style="font-size:15px;opacity:.85">Numbers in this dashboard are locked to <code>lockfile-2026-04-30-evening.json</code>. Any correction is logged inline at <a href="https://smartflowproai.substack.com">smartflowproai.substack.com</a>. Public retraction history: <a href="https://smartflowproai.substack.com/p/weekly-intel-2-i-published-a-wrong-number">Weekly Intel #2 — I Published a Wrong Number</a>. Methodology before numbers. Trust by discipline.</p>
+</section>
+
+<footer>
+<p>Source: <a href="https://github.com/smartflowproai-lang/quorum">github.com/smartflowproai-lang/quorum</a> · MIT License · Built for ETHGlobal OpenAgents 2026 · Last refreshed 2026-05-01</p>
+</footer>
+</div>
+</body>
+</html>
