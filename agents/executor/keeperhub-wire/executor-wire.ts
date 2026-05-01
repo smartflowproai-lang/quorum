@@ -184,6 +184,7 @@ export class ExecutorKeeperHubWire {
       try {
         const result = await this.mcp.callWorkflow({
           workflowId,
+          slug: hit.workflow_handle,
           input: args.input,
           idempotencyKey,
         });

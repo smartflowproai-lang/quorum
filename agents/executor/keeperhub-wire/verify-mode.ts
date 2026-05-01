@@ -58,10 +58,15 @@ async function main(): Promise<void> {
     endpoint = live;
   }
 
+  // Stub mode: never pass an auth token — the in-process mock does not
+  // implement the MCP `initialize` handshake and would 400 the wire on first
+  // call. Live mode: prefer KH_MCP_TOKEN, fall back to KH_API_KEY (the name
+  // KH ships in their dashboard / docs).
+  const liveAuthToken = process.env.KH_MCP_TOKEN ?? process.env.KH_API_KEY;
   const cfg: KeeperHubWireConfig = {
     ...DEFAULT_CONFIG,
     mcpEndpoint: endpoint,
-    mcpAuthToken: process.env.KH_MCP_TOKEN,
+    mcpAuthToken: useStub ? undefined : liveAuthToken,
     webhookSecret: process.env.KH_WEBHOOK_SECRET ?? 'verify-mode-secret',
     verifyLogPath,
   };
@@ -114,13 +119,29 @@ async function main(): Promise<void> {
     }) + '\n',
   );
 
+  // Stub mode targets the synthetic mock workflow (mock fabricates one for any query).
+  // Live mode targets a real KH workflow that exists, is free, and is read-only —
+  // "Zwarm Test: Sepolia Balance Check" (slug=zwarm-test-sepolia-balance-check).
+  // Read-only + price=0 means we exercise the full search → call → log loop
+  // without burning x402 USDC every iteration.
+  const workflowQuery = useStub
+    ? 'quorum-attest-v1'
+    : process.env.KH_VERIFY_WORKFLOW_QUERY ?? 'Zwarm Test';
+
+  const verifyRunStamp = new Date().toISOString();
   let okCount = 0;
   for (let i = 0; i < count; i++) {
-    const verdict = synthVerdict(i);
+    // Live verify-mode uses a real read-only workflow (zwarm-test-sepolia-balance-check)
+    // whose inputSchema is null, so we send only an iteration marker to keep
+    // each call's idempotency-key unique (otherwise iter 1+ all short-circuit
+    // off the local store).
+    const verdict = useStub
+      ? synthVerdict(i)
+      : { _verify_iter: i, _verify_run: verifyRunStamp };
     const traceId = `verify-${i.toString().padStart(4, '0')}`;
     try {
       const out = await wire.landAttestation({
-        workflowQuery: 'quorum-attest-v1',
+        workflowQuery,
         input: verdict,
         traceId,
       });
