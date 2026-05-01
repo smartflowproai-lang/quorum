@@ -1,0 +1,45 @@
+{
+  "captured_at_utc": "2026-05-01T21:20:09Z",
+  "kh_mcp_endpoint": "https://app.keeperhub.com/mcp",
+  "workflow_slug": "pack-0-10-demo",
+  "workflow_listing": {
+    "id": "npvfidmx1icmbnbbp172p",
+    "name": "Pack 0.10 (Demo)",
+    "description": "Demo transaction: A $0.10 payment is submitted and automatically returned to the user. In production this is the canonical paid-workflow shape.",
+    "price_usdc_per_call": 0.10
+  },
+  "request_method": "tools/call call_workflow",
+  "response_status": "isError: true (HTTP 402 surfaced)",
+  "response_raw": {"result": {"content": [{"type": "text", "text": "API call failed: 402 Payment Required - {\"x402Version\":2,\"error\":\"Payment required\",\"resource\":{\"url\":\"https://app.keeperhub.com/api/mcp/workflows/pack-0-10-demo/call\",\"description\":\"Pay to run workflow: Pack 0.10 (Demo)\",\"mimeType\":\"application/json\"},\"accepts\":[{\"scheme\":\"exact\",\"network\":\"eip155:8453\",\"asset\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"amount\":\"100000\",\"payTo\":\"0xf591c99cf53073db7b96cfb003cbcabdd3709544\",\"maxTimeoutSeconds\":300,\"extra\":{\"name\":\"USD Coin\",\"version\":\"2\"}}],\"extensions\":{\"bazaar\":{\"discoverable\":true,\"schema\":{\"properties\":{\"input\":{\"properties\":{\"body\":{\"type\":\"object\"}}},\"output\":{\"properties\":{\"example\":{\"executionId\":\"exec_abc123\",\"status\":\"running\"}}}}}}}}\n\nPaid workflow \"pack-0-10-demo\" \u2014 this MCP tool does not auto-pay.\nPrice: exact | 100000 (atomic units) of 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 on eip155:8453, payTo 0xf591c99cf53073db7b96cfb003cbcabdd3709544\nRetry with one of:\n  - @keeperhub/wallet: `paymentSigner.fetch(url, { method: 'POST', body, paymentHint: 'x402' })`\n  - agentcash: `mcp__agentcash__fetch` against the same endpoint\n  - Marketplace UI: open the listing's public page and run it interactively"}], "isError": true}, "jsonrpc": "2.0", "id": 5},
+  "x402_challenge_parsed": {
+    "x402Version": 2,
+    "error": "Payment required",
+    "resource_url": "https://app.keeperhub.com/api/mcp/workflows/pack-0-10-demo/call",
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:8453",
+        "network_name": "Base mainnet",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "asset_name": "USDC (Base mainnet, USD Coin v2)",
+        "amount_atomic": "100000",
+        "amount_human_usdc": "0.10",
+        "payTo": "0xf591c99cf53073db7b96cfb003cbcabdd3709544",
+        "maxTimeoutSeconds": 300
+      }
+    ],
+    "extensions": {
+      "bazaar": { "discoverable": true }
+    }
+  },
+  "auto_pay_documented_paths": [
+    "@keeperhub/wallet: paymentSigner.fetch(url, { method: 'POST', body, paymentHint: 'x402' })",
+    "agentcash: mcp__agentcash__fetch against the same endpoint",
+    "Marketplace UI: open the listing's public page and run it interactively"
+  ],
+  "quorum_design_alignment": {
+    "code_anchor": "agents/executor/keeperhub-wire/x402-payer.ts",
+    "design_intent": "Executor receives 402, packages as AXL message to Treasurer, waits for settle_tx_hash. Executor never holds Treasurer's private key — separation of concerns.",
+    "shape_match": "QUORUM's X402Challenge type already mirrors this exact response schema: scheme/network/asset/amount/payTo/maxTimeoutSeconds. Wire was built against the public x402 spec before this real challenge was captured."
+  }
+}
