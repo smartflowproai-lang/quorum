@@ -124,4 +124,4 @@ The full commit history is on the public GitHub repo with per-commit AI-assistan
 
 - Repo: https://github.com/smartflowproai-lang/quorum
 - Methodology + write-ups: https://smartflowproai.substack.com
-- Dashboard: https://quorum.smartflowproai.com — Day-5 deploy in progress, lands before judging window opens
+- Dashboard: https://quorum.smartflowproai.com — live status page (operational metrics, AXL mesh state, on-chain receipt, observatory substrate)
