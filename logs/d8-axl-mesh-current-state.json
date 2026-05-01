@@ -1,0 +1,28 @@
+{
+    "our_ipv6": "201:5ca3:e206:4861:4f3e:53d4:3c17:8fbe",
+    "our_public_key": "68d7077e6de7ac306b0af0fa1c10545c19e338b0cc43b522b56a9b5c1e8d586e",
+    "peers": [
+        {
+            "uri": "tls://159.65.172.200:58252",
+            "up": true,
+            "inbound": true,
+            "public_key": "570df17116b310d1f87def01925e354a657584f9c4818d6f1dedc0235d470c90",
+            "root": "",
+            "port": 1,
+            "coords": null
+        }
+    ],
+    "tree": [
+        {
+            "public_key": "68d7077e6de7ac306b0af0fa1c10545c19e338b0cc43b522b56a9b5c1e8d586e",
+            "parent": "570df17116b310d1f87def01925e354a657584f9c4818d6f1dedc0235d470c90",
+            "sequence": 3282
+        },
+        {
+            "public_key": "570df17116b310d1f87def01925e354a657584f9c4818d6f1dedc0235d470c90",
+            "parent": "570df17116b310d1f87def01925e354a657584f9c4818d6f1dedc0235d470c90",
+            "sequence": 3264
+        }
+    ]
+}
+2026-05-01T21:15:03Z
