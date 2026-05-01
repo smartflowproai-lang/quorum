@@ -1,4 +1,26 @@
 // shared/axl-wrap.ts — AXL HTTP API wrapper
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Tom Smart (@TomSmart_ai) — built for QUORUM at ETHGlobal OpenAgents 2026.
+//
+// STANDALONE-FRIENDLY: this file is intentionally dependency-free (just `fetch`,
+// no @gensyn/axl-sdk, no Zod). Drop into any TypeScript project that talks to
+// a local AXL node. Copy-paste this file + the AxlEnvelope/AxlSendArgs types,
+// set `AXL_HTTP_BASE` env if your node isn't on `http://localhost:9002`, done.
+//
+// Reference TypeScript implementation of the AXL agent-runtime API
+// (`localhost:9002` send/recv/topology). Reverse-engineered from a real
+// two-VPS Frankfurt+NYC mesh during the QUORUM build window — see
+// FEEDBACK-GENSYN.md item 7 for the docs gap I'd most want closed upstream.
+//
+// PR-ready: as soon as Gensyn opens an AXL repo (or a docs site that takes
+// PRs) where this kind of reference implementation belongs, this file is
+// ready to upstream verbatim. Until then, MIT-licensed and copy-friendly.
+//
+// Original module header preserved below.
+//
+// ---------------------------------------------------------------------------
+
+// shared/axl-wrap.ts — AXL HTTP API wrapper
 // AXL node exposes a local HTTP API on localhost:9002. This module provides typed
 // send/recv helpers so each QUORUM agent talks to its co-located AXL node without
 // depending on the AXL binary being in PATH.
