@@ -6,7 +6,7 @@
 
 ## Five differentiators (each with a hard anchor)
 
-1. **Multi-continent AXL mesh, signed bidirectional roundtrip.** Frankfurt + NYC, both AXL nodes PM2-wrapped, peered over TLS:9001 on Yggdrasil since 2026-04-22. Anchor: commit [`777cc08`](https://github.com/smartflowproai-lang/quorum/commit/777cc08), `infra/axl-hello.sh`, `logs/d1-axl-mesh-live.log` (Frankfurt pubkey `68d7077e…`, NYC inbound peer recorded).
+1. **Multi-continent AXL mesh, signed bidirectional roundtrip.** Frankfurt + NYC, both AXL nodes PM2-wrapped, peered over TLS:9001 on Yggdrasil since 2026-04-24. Anchor: commit [`777cc08`](https://github.com/smartflowproai-lang/quorum/commit/777cc08), `infra/axl-hello.sh`, `logs/d1-axl-mesh-live.log` (Frankfurt pubkey `68d7077e…`, NYC inbound peer recorded).
 
 2. **On-chain mainnet receipt — not a testnet screenshot.** Treasurer wallet `0xd779cE46…58C893` swapped 1 USDC → WETH via Universal Router + Permit2. Anchor: tx [`0xc03b8350…79b49849`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849), block 45,300,516, chainId 8453, verified via `eth_getTransactionByHash` against `mainnet.base.org`.
 

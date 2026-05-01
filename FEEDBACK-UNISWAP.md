@@ -7,6 +7,8 @@ Treasurer EOA: `0xd779cE46567d21b9918F24f0640cA5Ad6058C893`
 
 This is the partner-feedback bounty submission ($250) for the Uniswap Foundation track. Each item is a real friction point I hit wiring Treasurer against the Trading API on Base mainnet for autonomous x402 float top-ups. Format per item: **what I hit · impact on the build · what I'd change**.
 
+**End-to-end verification — first on-chain receipt** (Day 4, 2026-04-28): [`0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849) — 1 USDC → WETH via Universal Router + Permit2 on Base mainnet (chainId 8453, block 45,300,516, verified live via `eth_getTransactionByHash` against `mainnet.base.org`). Same path Treasurer drives programmatically. Real wallet, real money, real settlement before the items below were filed.
+
 ---
 
 ## 1 — Permit2 `primaryType` ambiguity in `/v1/quote` response

@@ -11,7 +11,7 @@
 
 Five agents, two continents, one encrypted mesh, one verdict per Solana memecoin candidate. Scout watches 14 curated Solana smart-money wallets in Frankfurt; Judge scores candidates against an 18-day archive of 58,432 copy-bot events also in Frankfurt; Verifier independently validates each verdict in NYC and signs the attestation; Executor lands the signed attestation on Base via KeeperHub; Treasurer pays for every job with x402 and tops itself up via the Uniswap Trading API. Every agent has a separate ed25519 identity on the Gensyn AXL mesh. No central broker, no shared wallet, no human in the gas loop.
 
-The mesh is the point. Most "multi-agent" demos run four functions in one process and call it a system. QUORUM physically separates Scout + Judge in Frankfurt from Verifier + Executor + Treasurer in NYC — when I take the NYC node down mid-verdict, Frankfurt keeps producing candidates, queues messages, and drains them on reconnect. The bidirectional roundtrip across Frankfurt ↔ NYC was verified on 2026-04-22 (Day-1 init commit). The partition-recovery rig lands at `infra/chaos.sh` Day 7-8 alongside the chaos-test workflow.
+The mesh is the point. Most "multi-agent" demos run four functions in one process and call it a system. QUORUM physically separates Scout + Judge in Frankfurt from Verifier + Executor + Treasurer in NYC — when I take the NYC node down mid-verdict, Frankfurt keeps producing candidates, queues messages, and drains them on reconnect. The bidirectional roundtrip across Frankfurt ↔ NYC was verified on 2026-04-24 (Day-1 init commit). The partition-recovery rig lands at `infra/chaos.sh` Day 7-8 alongside the chaos-test workflow.
 
 ---
 
@@ -83,7 +83,7 @@ The natural next surface is `quorum/submit-verdict` as an MCP tool — any exter
 | `agents/treasurer/` | NYC — Uniswap Trading API client, USDC float manager (Permit2 + EXACT_INPUT swap path verified on Base mainnet) |
 | `shared/axl-wrap.ts`| Typed TypeScript wrapper around the AXL HTTP interface |
 | `infra/deploy-vps.sh` | Single deploy script with role flag (Frankfurt vs NYC) |
-| `infra/axl-hello.sh`  | Bidirectional cross-Atlantic roundtrip smoke test (2026-04-22 verified) |
+| `infra/axl-hello.sh`  | Bidirectional cross-Atlantic roundtrip smoke test (2026-04-24 verified) |
 | `FEEDBACK.md`       | Index of partner-specific feedback files (Uniswap auto-DQ guard) |
 | `FEEDBACK-UNISWAP.md`   | Uniswap Trading API feedback (≥6 specific items, $250 bounty) |
 | `FEEDBACK-KeeperHub.md` | KeeperHub integration feedback ($500 feedback bounty target) |

@@ -2,7 +2,7 @@
 
 Builder: Tom Smart ([@TomSmart_ai](https://x.com/TomSmart_ai))
 Project: QUORUM (ETHGlobal OpenAgents 2026)
-Integration period: 2026-04-22 → 2026-05-03
+Integration period: 2026-04-24 → 2026-05-03
 Frankfurt host: `143.244.204.114` · NYC host: `159.65.172.200`
 Treasurer EOA: `0xd779cE46567d21b9918F24f0640cA5Ad6058C893`
 
@@ -10,7 +10,7 @@ This is the partner-feedback bounty submission for the Gensyn AXL primary-sponso
 
 ## Why this feedback is shaped differently than most
 
-Most AXL integration feedback is one builder, one box, one weekend. Mine is filtered through (a) a real two-continent deployment — Frankfurt VPS running Scout + Judge, NYC VPS running Verifier + Executor + Treasurer, both AXL nodes PM2-wrapped, each AXL node's public TLS listener bound to port 9001 and reached over the Yggdrasil-routable IPv6 namespace since 2026-04-22 — and (b) an x402 observatory I've been running outside the hackathon: 22,054 endpoints catalogued across the three primary x402 registries plus tail sources, 6,448,184 raw Base mainnet x402 payment candidates indexed over an 18.4-day window (2026-04-12 → 2026-04-30 18:02 UTC), 3,409,612 clean payments after wash filter, 15.01% / 511,716 of the clean subset facilitator-classified (lockfile `lockfile-2026-04-30-evening.json` regenerated from `payments.db` 2026-04-30 16:10 UTC; balance still mid-backfill against Base RPC `eth_getTransactionByHash`; methodology in `DATA-COVERAGE.md`).
+Most AXL integration feedback is one builder, one box, one weekend. Mine is filtered through (a) a real two-continent deployment — Frankfurt VPS running Scout + Judge, NYC VPS running Verifier + Executor + Treasurer, both AXL nodes PM2-wrapped, each AXL node's public TLS listener bound to port 9001 and reached over the Yggdrasil-routable IPv6 namespace since 2026-04-24 — and (b) an x402 observatory I've been running outside the hackathon: 22,054 endpoints catalogued across the three primary x402 registries plus tail sources, 6,448,184 raw Base mainnet x402 payment candidates indexed over an 18.4-day window (2026-04-12 → 2026-04-30 18:02 UTC), 3,409,612 clean payments after wash filter, 15.01% / 511,716 of the clean subset facilitator-classified (lockfile `lockfile-2026-04-30-evening.json` regenerated from `payments.db` 2026-04-30 16:10 UTC; balance still mid-backfill against Base RPC `eth_getTransactionByHash`; methodology in `DATA-COVERAGE.md`).
 
 That two-surface visibility shaped the items. I'm not just describing what bit me at boot — I can see the underlying x402 traffic shape on Base today and can ground-truth predictions about where AXL bends when agent-mesh volume routes through it. Items 3 and 6 below in particular come from that visibility, not from "here's what bit me on Tuesday".
 
@@ -110,7 +110,7 @@ The specific gaps that cost the most time: (a) is `/recv` destructive-on-read or
 
 ## What worked well
 
-- The **bidirectional Frankfurt ↔ NYC roundtrip** worked first try once the firewall was open. Sub-2s handshake, both AXL listeners stayed reachable on both sides over the build window — restart counts on the Frankfurt PM2 process are elevated (700 restarts over 44h captured in `logs/d1-axl-mesh-live.log` section 1), root cause is being chased post-hackathon and is the open issue I'd most want a Gensyn engineer's eyes on. For a fresh cloud-VPS pair across continents, the *peering* shape is right; the *uptime* shape needs work and I'm not going to wave it past in a feedback doc.
+- The **bidirectional Frankfurt ↔ NYC roundtrip** worked first try once the firewall was open. Sub-2s handshake, both AXL listeners stayed reachable on both sides over the build window — restart counts on the Frankfurt PM2 process are elevated (700 restarts over 44h captured in `logs/d1-axl-mesh-live.log` section 1; partition-recovery procedure documented in `CHAOS-TEST.md` against the same node pair). Working hypothesis is a TLS-keepalive / Yggdrasil-reroute interaction that drops the AXL listener on stale routes and PM2 catches it cleanly — root cause investigation continues post-hackathon and is the open issue I'd most want a Gensyn engineer's eyes on. Happy to file a GitHub issue against the AXL repo with the log excerpt and reproducible cadence if that's the right surface. For a fresh cloud-VPS pair across continents, the *peering* shape is right; the *uptime* shape needs work and I'm not going to wave it past in a feedback doc.
 - **PM2-wrappable**: AXL runs cleanly under PM2 on both sides, restarts are clean, the logs go to PM2 like any other Node process. Operationally this matters — I didn't have to invent a daemon-supervision story.
 - The **HTTP API on `localhost:9002`** is the right shape for agent integration. Beats a binary-exec contract (which was the Day-1 stub I started with). `fetch` from any language, no PATH issues in Docker.
 - **TLS over Yggdrasil port 9001** felt over-engineered before I deployed it and then proved its worth — peer authentication is implicit in the keypair, no certificate pipeline to manage.
@@ -125,7 +125,7 @@ AXL is shipping the right primitive for the part of the agent stack I see emergi
 
 The grounded view from running an x402 observatory outside the hackathon: the agent-economy traffic shape is bursty in ways naive sizing doesn't anticipate. 6,448,184 raw Base mainnet x402 payment candidates over an 18.4-day window (2026-04-12 → 2026-04-30 18:02 UTC, lockfile in repo) is not theoretical demand — it's already on-chain. Items 3, 5, and 6 are also where the multi-region-against-bursty-traffic shape will bite hardest.
 
-The combined Gensyn-AXL-mesh + KeeperHub-execution + Uniswap-funded-Treasurer pattern is going to be a category, not a one-off. Both Frankfurt and NYC nodes have been stable through the build window; the bidirectional roundtrip evidence is in the repo (`infra/axl-hello.sh`, `logs/d1-axl-mesh-live.log`); and `shared/axl-wrap.ts` is MIT — reusable by any team building on AXL.
+The combined Gensyn-AXL-mesh + KeeperHub-execution + Uniswap-funded-Treasurer pattern is going to be a category, not a one-off. Both Frankfurt and NYC nodes have been stable through the build window; the bidirectional roundtrip evidence is in the repo (`infra/axl-hello.sh`, `logs/d1-axl-mesh-live.log`); and `shared/axl-wrap.ts` is MIT — reusable by any team building on AXL. Happy to open a PR against the AXL repo (or a docs PR) with the wrapper as a reference TypeScript implementation if Gensyn wants it surfaced from official channels — flag and I'll file it.
 
 Happy to talk through any of these in more depth.
 
