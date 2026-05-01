@@ -103,6 +103,32 @@ The cross-check I'd want as an integrator: my observatory tracks ~3M clean Base 
 
 ---
 
+## 8 — x402 challenge shape captured live: KH MCP returns spec-compliant 402 but the MCP tool itself doesn't auto-pay
+
+**What I tried.** Run a paid workflow (`pack-0-10-demo`, $0.10 USDC on Base mainnet) directly via `tools/call call_workflow` against `app.keeperhub.com/mcp` to validate the end-to-end paid path against my live KH wire — not the read-only `zwarm-test` workflow that backs the 73 settled executions above.
+
+**What happened.** The MCP `tools/call` returned `isError: true` with the canonical x402-version-2 challenge embedded in `result.content[0].text`. Captured live snapshot: [`logs/d8-kh-x402-challenge-response.json`](./logs/d8-kh-x402-challenge-response.json) (2026-05-01T21:20Z). Challenge shape:
+
+```
+network: eip155:8453 (Base mainnet)
+asset:   0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 (USDC)
+amount:  100000 atomic ($0.10 USDC)
+payTo:   0xf591c99cf53073db7b96cfb003cbcabdd3709544
+maxTimeoutSeconds: 300
+scheme:  exact
+extensions.bazaar.discoverable: true
+```
+
+The KH-side error message was the useful surprise: it explicitly listed three retry paths — `@keeperhub/wallet` paymentSigner, `mcp__agentcash__fetch`, or the marketplace UI. None of them are the MCP `tools/call` itself. The MCP server returns the challenge but does not bridge the payer.
+
+**Why this matters for the integration shape.** QUORUM's [`agents/executor/keeperhub-wire/x402-payer.ts`](./agents/executor/keeperhub-wire/x402-payer.ts) was written against the public x402 spec before this real challenge was captured. The `X402Challenge` type in [`agents/executor/keeperhub-wire/types.ts`](./agents/executor/keeperhub-wire/types.ts) mirrors the captured shape one-for-one (scheme/network/asset/amount/payTo/maxTimeoutSeconds). Executor's design intent — never hold Treasurer's signer key, package the 402 as an AXL message to the treasurer agent, wait for `settle_tx_hash` reply with timeout — anticipates exactly this MCP-doesn't-auto-pay reality. Spec match validated against live API, not assumed from docs.
+
+**Suggestion.** Two things:
+
+1. **Document the paid-MCP path explicitly.** A docs page titled "Paying for KH workflows over MCP" covering: (a) the 402 challenge JSON shape exposed on `result.content[0].text`, (b) the three retry paths surfaced in the error message, (c) the expected `executionId` + `settled` shape returned after a successful payment. Today an integrator has to send a paid call and read the error to learn this. The information is good — make it discoverable before the call.
+
+2. **Surface the choice cleanly in the MCP response.** Instead of `isError: true` for the 402 case, return a structured `requires_payment` envelope so MCP clients can distinguish "billing intent" from "actual error". Today the wire treats every `isError: true` as fatal until the caller parses the embedded JSON for `x402Version`. A typed signal would let multi-agent stacks like QUORUM route 402s to a payer agent without inspecting prose.
+
 ## What worked well
 
 - The `search_workflows` → `call_workflow` two-step is the right shape for agent integrators. It separates discovery from invocation, which lets Executor cache discovery results and only invoke on hot path.
