@@ -29,6 +29,10 @@ This is the partner-feedback bounty submission ($250) for the Uniswap Foundation
 
 **Suggestion.** Document the supported-chain matrix per endpoint (`/quote` vs `/swap` vs others) in one table on the docs landing page. If a chain is accepted at `/quote` but not at `/swap`, call that out explicitly — quoting on a chain you can't swap on is a footgun. If the canonical behaviour is to reject unsupported chains at `/quote` time with `400 unsupported_chain`, document the response shape so client-side guards can match it.
 
+**Live re-probe 2026-05-01T21:21Z (post-hackathon-window evidence capture).** Re-ran POST `/v1/quote` against `trade-api.gateway.uniswap.org/v1` with both `tokenInChainId: 84532` and `tokenInChainId: 8453`, no API key (the original blocker — I rebuilt against my client without re-authing first to compare). Both requests returned identical shape: `HTTP/2 401 ` + `{"errorCode":"Unauthorized","detail":"Unauthenticated api key or session","requestId":"ctDl5jrHCYcEPbw=" / "ctDl7iMKCYcEPdQ="}`. Captured raw at [`logs/d8-uniswap-chainid-probe.log`](./logs/d8-uniswap-chainid-probe.log).
+
+**Secondary friction surfaced by the re-probe.** Auth check fires before chainId validation, which means an unauthed integrator probing chain support gets `401 Unauthorized` for both supported (`8453`) and unsupported (`84532`) chains — indistinguishable. The same request without an API key tells you nothing about chain support, so the only way a builder learns "Base Sepolia isn't live" is to wire a key and try, see the failure mode, and back-derive the matrix. The docs gap I hit originally compounds with this: nothing on the public page says "supported chains" without an authed call. A public, unauthed `GET /v1/chains` (or equivalent metadata endpoint) returning the supported-chain matrix would short-circuit this whole class of debug — that's the change I'd most like to see ship.
+
 ---
 
 ## 3 — `EXACT_OUTPUT` semantics for x402 use cases (design note — not yet shipped)
