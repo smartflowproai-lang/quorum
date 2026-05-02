@@ -1,0 +1,62 @@
+{
+  "tx_hash": "0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409",
+  "basescan_url": "https://basescan.org/tx/0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409",
+  "context": "Spec-conformant USDC settlement of the x402 challenge captured against KeeperHub's pack-0-10-demo MCP workflow. Treasurer pays per the x402v2 challenge.accepts[0] spec — same network, same asset, same amount, same payTo recipient.",
+  "treasurer_address": "0xd779cE46567d21b9918F24f0640cA5Ad6058C893",
+  "kh_payto_address": "0xf591c99Cf53073Db7B96cFb003CBcaBDD3709544",
+  "asset": {
+    "symbol": "USDC",
+    "name": "USD Coin (Base mainnet, v2)",
+    "contract": "0x833589fCD6eDb6E08f4c7C32D4f71b54bda02913",
+    "decimals": 6,
+    "amount_atomic": 100000,
+    "amount_human_usdc": "0.10"
+  },
+  "x402_spec_conformance": {
+    "version": "x402v2",
+    "scheme": "exact",
+    "network": "eip155:8453",
+    "challenge_source_file": "logs/d8-kh-x402-challenge-response.json",
+    "challenge_captured_at_utc": "2026-05-01T21:20:09Z",
+    "challenge_workflow": "pack-0-10-demo (KeeperHub MCP)",
+    "spec_match": "amount, asset, payTo, network sourced 1:1 from challenge.accepts[0]",
+    "settlement_path": "Treasurer signed ERC-20 transfer(payTo, amount) directly from EIP-7702 smart EOA. Wallet-isolation discipline: Executor receives 402, packages as AXL message to Treasurer, waits for settle_tx_hash. Executor never holds Treasurer's private key."
+  },
+  "calldata_decode": {
+    "input_raw": "0xa9059cbb000000000000000000000000f591c99cf53073db7b96cfb003cbcabdd370954400000000000000000000000000000000000000000000000000000000000186a0",
+    "selector": "0xa9059cbb",
+    "function_signature": "transfer(address,uint256)",
+    "arg0_to": "0xf591c99cf53073db7b96cfb003cbcabdd3709544",
+    "arg1_amount_hex": "0x00000000000000000000000000000000000000000000000000000000000186a0",
+    "arg1_amount_decimal": 100000,
+    "arg1_amount_human_usdc": "0.10"
+  },
+  "transfer_log_emitted": {
+    "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bda02913",
+    "topics": [
+      "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef (Transfer)",
+      "0x000000000000000000000000d779ce46567d21b9918f24f0640ca5ad6058c893 (from = Treasurer)",
+      "0x000000000000000000000000f591c99cf53073db7b96cfb003cbcabdd3709544 (to = KH payTo)"
+    ],
+    "data_amount_atomic": 100000,
+    "data_amount_human_usdc": "0.10"
+  },
+  "block_number": 45478048,
+  "block_number_hex": "0x2b5f0a0",
+  "block_timestamp_unix": 1777745443,
+  "block_timestamp_iso_utc": "2026-05-02T18:10:43+00:00",
+  "block_hash": "0x8e4be0634184fbfe6696d802bbfecb585da7e6b8dd0afd5e76477217d0e06084",
+  "transaction_index": 83,
+  "tx_type": "0x2 (EIP-1559)",
+  "from": "0xd779ce46567d21b9918f24f0640ca5ad6058c893",
+  "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 (USDC contract)",
+  "value_eth": "0x0 (zero ETH; ERC-20 transfer only)",
+  "gas_used_actual": 45059,
+  "gas_price_wei": "0x5b8d80",
+  "max_fee_per_gas_wei": "0x6acfc0",
+  "max_priority_fee_per_gas_wei": "0xf4240",
+  "status": "success",
+  "chain_id": "0x2105 (Base mainnet, 8453)",
+  "verify_via_rpc": "curl -s -X POST -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionReceipt\",\"params\":[\"0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409\"],\"id\":1}' https://mainnet.base.org",
+  "ts_decoded_local": "2026-05-02T21:45:00+02:00 (Europe/Warsaw)"
+}
