@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/dashboard-hero.png" alt="QUORUM live status dashboard — 5-agent mesh, on-chain receipts, AXL Frankfurt↔NYC peer link" width="100%" />
+</p>
+
 # QUORUM
 
 Five agents on a multi-continent AXL mesh, paying each other in x402, posting rug verdicts to Base mainnet.
