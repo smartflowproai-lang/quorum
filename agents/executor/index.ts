@@ -1,4 +1,3 @@
-// PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
 // EXECUTOR agent — receives verdicts from Judge, posts attestations via KeeperHub MCP on Base
 // Day-5 work: KeeperHub MCP wire, ERC-8004 attestation submission, retry logic
 
