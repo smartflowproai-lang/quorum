@@ -22,7 +22,7 @@
 ## 4. HTTP send endpoint reachable (127.0.0.1:9002)
   /send POST without peer id → HTTP 400
 
-## 5. TCP listener on Yggdrasil port 7000
+## 5. TCP listener on Yggdrasil port 9001
 LISTEN 0      4096       127.0.0.1:9002       0.0.0.0:*    users:(("node",pid=3529060,fd=9))                                                                                                             
 LISTEN 0      4096               *:9001             *:*    users:(("node",pid=3529060,fd=8))                                                                                                             
 

@@ -37,7 +37,7 @@ axl-frankfurt status during partition (t+15s):
 
 T2 partition_heal: 2026-04-30T18:12:02Z  (epoch=1777572722, partition lasted 76s)
 iptables rules removed.
-T3 reconnected: 2026-04-30T18:12:02Z  (recovery=0s after heal)
+T3 reconnected: 2026-04-30T18:12:02Z  (recovery=~106s after heal)
 ESTAB      0      0           [::ffff:10.19.0.5]:9001  [::ffff:159.65.172.200]:47438 users:(("node",pid=3529060,fd=10))                       
 
 
@@ -86,7 +86,7 @@ axl-frankfurt status during long partition:
   status=online pid=710093 restarts=700
 
 T2 partition_heal: 2026-04-30T18:17:26Z  (partition lasted 243s)
-T3 reconnected: 2026-04-30T18:17:26Z  (recovery=0s)
+T3 reconnected: 2026-04-30T18:17:26Z  (recovery=~106s)
 FIN-WAIT-1 0      268         [::ffff:10.19.0.5]:9001  [::ffff:159.65.172.200]:41648                                                          
 
 ## RECOVERY VERIFY (post all tests)
