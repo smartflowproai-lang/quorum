@@ -4,7 +4,7 @@ Five agents on a multi-continent AXL mesh, paying each other in x402, posting ru
 
 ETHGlobal OpenAgents · MIT · built by Tom Smart
 
-[![CI](https://github.com/smartflowproai-lang/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowproai-lang/quorum/actions) · [Live status dashboard](https://smartflowproai-lang.github.io/quorum/) · [BaseScan attestation](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) · [BaseScan swap](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
+[![CI](https://github.com/smartflowproai-lang/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowproai-lang/quorum/actions) · [Live status dashboard](https://smartflowproai-lang.github.io/quorum/) · [Verdict attestation TX](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) · [KH x402 settlement TX](https://basescan.org/tx/0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409) · [Uniswap swap TX](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
 
 ---
 
@@ -12,26 +12,22 @@ ETHGlobal OpenAgents · MIT · built by Tom Smart
 
 - **5 agents physically separated** across two continents — Scout + Judge in Frankfurt, Verifier + Executor + Treasurer in NYC. Not 5 functions in one process.
 - **Verdicts signed twice** — Judge in Frankfurt + Verifier in NYC, both ed25519, both committed in the on-chain attestation payload before settlement.
-- **1 live MCP session converged ok=11/12** vs `app.keeperhub.com` on read-only Sepolia-testnet workflow `zwarm-test-sepolia-balance-check` (5 prior sessions ok=0/12 debugging auth/host) + 62 stub iterations vs local harness validating idempotency, all logged at [`logs/d6-keeperhub-wire-verify.log`](./logs/d6-keeperhub-wire-verify.log). Plus 1 real x402 paid challenge captured live against Base-mainnet [`pack-0-10-demo` workflow](./logs/d8-kh-x402-challenge-response.json) at `app.keeperhub.com/mcp` (schema validated) AND spec-conformant USDC settlement landed on-chain to KH's payTo per the captured challenge: [`0xce40d380...e416d4409`](https://basescan.org/tx/0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409) (block 45,478,048, 0.10 USDC, [`logs/d10-kh-paid-settlement-tx.json`](./logs/d10-kh-paid-settlement-tx.json)).
-- **Real x402 challenge captured** from KH paid workflow at [`logs/d8-kh-x402-challenge-response.json`](./logs/d8-kh-x402-challenge-response.json) — schema matches QUORUM's `X402Challenge` type one-for-one (built before the challenge was captured).
+- **KH wire shipped both legs**: 1 live MCP session converged ok=11/12 vs `app.keeperhub.com` (Sepolia-testnet workflow, [`logs/d6-keeperhub-wire-verify.log`](./logs/d6-keeperhub-wire-verify.log)) + 1 paid x402 challenge captured against Base-mainnet `pack-0-10-demo` ([`logs/d8-kh-x402-challenge-response.json`](./logs/d8-kh-x402-challenge-response.json), schema 1:1 to QUORUM's `X402Challenge` type) + spec-conformant USDC settlement landed on-chain to KH's `payTo`: [`0xce40d380…`](https://basescan.org/tx/0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409) (block 45,478,048, 0.10 USDC per challenge.accepts[0]).
 - **Real chaos test artifact**: [`infra/chaos-axl-failover.sh`](./infra/chaos-axl-failover.sh) + [`logs/d8-chaos-recovery.log`](./logs/d8-chaos-recovery.log) + [`logs/d8-axl-mesh-current-state.json`](./logs/d8-axl-mesh-current-state.json) (live snapshot showing same Frankfurt pubkey two days after the test, mesh still ESTAB on port 58252 sequence 3282).
 - **Live-active observatory, not a snapshot** — indexer kept backfilling between hackathon lockfiles: 13.0% (29.04) → 15.01% (30.04 lock at [`lockfile-2026-04-30-evening.json`](./lockfile-2026-04-30-evening.json)) → 20.21% (02.05 lock at [`lockfile-2026-05-02-evening.json`](./lockfile-2026-05-02-evening.json)). +5.2pt classified rate in 2 days. Same `wash_flag IS NULL` denominator throughout, growing with newly-indexed clean payments. Production-grade live indexer, not a one-shot hackathon snapshot.
 - **Methodology before numbers** — public retraction at [Weekly Intel #2: I Published a Wrong Number](https://smartflowproai.substack.com), submission lock at [`lockfile-2026-04-30-evening.json`](./lockfile-2026-04-30-evening.json), most recent indexer state at [`lockfile-2026-05-02-evening.json`](./lockfile-2026-05-02-evening.json).
 
 ---
 
-## On-chain receipt — Base mainnet
+## On-chain receipts — three distinct Base mainnet anchors
 
-First Treasurer swap, 2026-04-28:
+Three real receipts, three distinct evidence layers, all from Treasurer wallet `0xd779cE46…58C893` — **EIP-7702 smart EOA** (Pectra set-code delegate; production-grade account abstraction, not legacy EOA):
 
-- **Verdict attestation TX (primary anchor)**: [`0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22`](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) — block 45,476,871, ed25519-signed canonical evidence hash from Frankfurt Judge + NYC Verifier, anchored on Base mainnet via Treasurer 0-value calldata-only TX (decode format documented in `logs/d10-quorum-attestation-tx.json`).
-- **Treasurer swap TX (Uniswap anchor)**: [`0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849) — 1 USDC → WETH via Universal Router + Permit2, real wallet, real money, real settlement (2026-04-28 receipt).
-- **Treasurer wallet**: `0xd779cE46…58C893` — EIP-7702 smart EOA (Pectra set-code delegate, production-grade account abstraction, not legacy EOA)
-- Block **45,300,516**, chainId **8453**
-- 1 USDC → WETH via Universal Router + Permit2 — the same path Treasurer drives programmatically
-- Verified live via `eth_getTransactionByHash` against `mainnet.base.org`
+1. **Verdict attestation TX (Gensyn + Grand Prize anchor)**: [`0x19bb1d0e…`](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) — block 45,476,871, 0-value calldata-only TX. Calldata holds canonical evidence hash signed independently by Frankfurt Judge ed25519 + NYC Verifier ed25519. Both pubkeys embedded; both signatures publicly verifiable. Anyone can run [`agents/treasurer/scripts/decode-attestation-tx.mjs`](./agents/treasurer/scripts/decode-attestation-tx.mjs) and see VALID ✓ for both sigs (zero-dependency Node, reads any QUORUM attestation TX). Decode format in [`logs/d10-quorum-attestation-tx.json`](./logs/d10-quorum-attestation-tx.json).
+2. **KH x402 settlement TX (KeeperHub anchor)**: [`0xce40d380…`](https://basescan.org/tx/0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409) — block 45,478,048, 0.10 USDC = 100,000 atomic per the captured `challenge.accepts[0]` from KH MCP. Treasurer → KH's `payTo` `0xf591c99c…3709544`. Spec-conformant payment leg of `x402v2 scheme=exact` landed on-chain. Decode in [`logs/d10-kh-paid-settlement-tx.json`](./logs/d10-kh-paid-settlement-tx.json).
+3. **Treasurer swap TX (Uniswap anchor)**: [`0xc03b8350…`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849) — block 45,300,516, 1 USDC → WETH via Universal Router + Permit2. Same path Treasurer is wired to drive (1 manual supervised receipt; programmatic loop deferred post-hackathon for wallet-isolation security).
 
-This isn't a testnet screenshot. Real Base mainnet, real USDC, real wallet (`0xd779cE46567d21b9918F24f0640cA5Ad6058C893`), end-to-end before Treasurer code drives it.
+All three verified live via `eth_getTransactionByHash` against `mainnet.base.org`, chainId **8453**. Not testnet screenshots — real wallet, real money, real settlement.
 
 ---
 
