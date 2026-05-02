@@ -4,7 +4,7 @@ Five agents on a multi-continent AXL mesh, paying each other in x402, posting ru
 
 ETHGlobal OpenAgents · MIT · built by Tom Smart
 
-[![CI](https://github.com/smartflowproai-lang/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowproai-lang/quorum/actions) · [Live status dashboard](https://quorum.smartflowproai.com) · [BaseScan receipt](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
+[![CI](https://github.com/smartflowproai-lang/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowproai-lang/quorum/actions) · [Live status dashboard](https://smartflowproai-lang.github.io/quorum/) · [BaseScan receipt](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
 
 ---
 
