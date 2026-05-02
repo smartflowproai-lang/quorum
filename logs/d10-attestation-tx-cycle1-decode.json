@@ -1,0 +1,26 @@
+{
+  "tx_hash": "0x5205bb5002055b1dace5f3843d46583d987c358014767fabf00b05ea8f657e07",
+  "basescan_url": "https://basescan.org/tx/0x5205bb5002055b1dace5f3843d46583d987c358014767fabf00b05ea8f657e07",
+  "treasurer_address": "0xd779cE46567d21b9918F24f0640cA5Ad6058C893",
+  "payload": {
+    "protocol": "QUORUM",
+    "version": "1.0",
+    "case_id": "quorum-attestation-demo-1",
+    "claim": "5-agent mesh cross-validation: Judge (Frankfurt) and Verifier (NYC) independently signed canonical evidence hash, Treasurer anchored signed verdict on Base mainnet via 0-value calldata-only transaction.",
+    "evidence_hash": "ba2ab4ad4149a339f03b8a8923439cd58211f57b9523a0f54f919bc18440040d",
+    "judge_pubkey_hex": "302a300506032b65700321009df54d38fad83944b0708e9d9e4ed02d5983e67abd3731ee17ae9452bfff4a32",
+    "verifier_pubkey_hex": "302a300506032b65700321008097f92404f1cbdf856e5cb2a3a271ad90a4aeb68604aea6750f7304001989e7",
+    "judge_role": "frankfurt",
+    "verifier_role": "nyc",
+    "verdict": "PASS",
+    "ts": "2026-05-02T18:35:37.855Z"
+  },
+  "judge_sig_hex": "c0ca61b5ab7c23bc1c4c8edee26a4f28d462a2c7fecfb6401ac944b25874ad6e7e0f1607d2a9eb3aa4200758e74fecaf6312bc997564a4319b5442f96ca1e309",
+  "verifier_sig_hex": "4c097e80d60d987cabbf2176186665ed5716c42c6ea9297b6e0c200cbd78fd1642d2fd81d4267c88503a2d4010c87258075fd976d8bad1009a4c6ff6b57de707",
+  "calldata_size_bytes": 828,
+  "decode_instructions": "calldata format: 8 bytes ASCII marker QUORUMV1, 2 bytes payload length uint16 BE, payload JSON UTF-8, 64-byte judge ed25519 sig, 64-byte verifier ed25519 sig",
+  "ts_submitted": "2026-05-02T18:35:37.855Z",
+  "block_number": "45478797",
+  "status": "success",
+  "gas_used_actual": "54090"
+}

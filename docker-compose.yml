@@ -1,4 +1,6 @@
-# QUORUM — 4-agent mesh for ETHGlobal OpenAgents 2026
+# QUORUM — 5-agent mesh for ETHGlobal OpenAgents 2026
+# Scout + Judge in Frankfurt, Verifier + Executor + Treasurer in NYC.
+# This compose runs all five locally for demo; cross-host deploy splits services per geo via infra/deploy-vps.sh.
 
 version: "3.9"
 
@@ -28,6 +30,19 @@ services:
     restart: unless-stopped
     depends_on: [scout]
 
+  verifier:
+    build:
+      context: .
+      dockerfile: agents/verifier/Dockerfile
+    container_name: quorum-verifier
+    env_file: .env
+    volumes:
+      - axl-mesh:/var/run/axl
+      - ./shared:/app/shared:ro
+    networks: [quorum-mesh]
+    restart: unless-stopped
+    depends_on: [judge]
+
   executor:
     build:
       context: .
@@ -39,7 +54,7 @@ services:
       - ./shared:/app/shared:ro
     networks: [quorum-mesh]
     restart: unless-stopped
-    depends_on: [judge]
+    depends_on: [verifier]
 
   treasurer:
     build:
