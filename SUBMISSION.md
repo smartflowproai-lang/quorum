@@ -44,11 +44,11 @@ The interesting positioning isn't the volume — it's the integration shape. Tre
 
 Real x402 traffic context (my own observatory, 20.04-day window 2026-04-12 09:05 → 2026-05-02 10:02 UTC; most-recent state in `lockfile-2026-05-02-evening.json` regenerated 2026-05-02 10:45 UTC; submission lock at `lockfile-2026-04-30-evening.json` superseded by live backfill — see Update note below; methodology in `DATA-COVERAGE.md`):
 
-- 22,054 x402 endpoints catalogued across three primary registries plus tail sources
+- 22,074 x402 endpoints catalogued across three primary registries plus tail sources
 - 7,248,641 raw Base x402 payment candidates → 4,000,062 clean payments after wash filter (44.8% removed as self-referential / dust / burst-pattern noise)
 - 487,330 distinct from-wallets, 478,621 distinct to-wallets across clean payments, mean payment $1.086
 - 61 facilitator-class signing addresses tracked (54 mapped Coinbase CDP + 7 pattern-inferred candidates — including a single high-volume unlabelled facilitator likely Bankr or Mogami, documented in methodology)
-- Caveat upfront: facilitator-vs-P2P classification currently complete for 15.01% / 511,716 of the clean subset; the 84.99% balance is still mid-backfill against Base RPC `eth_getTransactionByHash`. The facilitator-vs-P2P split holds only on the classified subset. Methodology and number-history at smartflowproai.substack.com (corrections logged inline).
+- Caveat upfront: facilitator-vs-P2P classification currently complete for 20.21% / 808,294 of the clean subset; the 79.79% balance is still mid-backfill against Base RPC `eth_getTransactionByHash`. The facilitator-vs-P2P split holds only on the classified subset. Methodology and number-history at smartflowproai.substack.com (corrections logged inline).
 
 **Update 2026-04-30 16:10 UTC — backfill progress note**: this submission lock supersedes the 2026-04-29 numbers (13.0% / 392,556) referenced in commit `550cf5e`. Coverage progressed 13.0% (29.04) → 15.01% (30.04 lock) — monotonic backfill progress, not query corrections. The same `wash_flag IS NULL` denominator (3,409,612 today vs 3,028,345 on 29.04) is used throughout — the denominator grew because new clean payments were indexed during the window, not because the query changed. Lockfile in repo: `lockfile-2026-04-30-evening.json`. **Live-active proof-of-life**: a fresh lockfile committed at `lockfile-2026-05-02-evening.json` shows the indexer continued backfilling — coverage advanced 15.01% (30.04 16:10) → 20.21% (02.05 10:45 UTC, 20.04-day window 2026-04-12 → 2026-05-02). Same methodology, denominator grew with newly-indexed clean payments. The indexer is not a one-shot snapshot; it is actively backfilling against Base RPC every hour the VPS is up.
 
