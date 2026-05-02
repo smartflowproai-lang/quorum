@@ -1,0 +1,41 @@
+{
+  "lock_timestamp_pl": "2026-05-02T10:46  (UTC; PL +2h)",
+  "lock_timestamp_utc": "2026-05-02T10:45:51Z",
+  "source_db": "/root/x402-payment-tracker/payments.db",
+  "data_window": {
+    "min_ts_utc": "2026-04-12T09:05:21.720577Z",
+    "max_ts_utc": "2026-05-02T10:02:25.895091Z",
+    "span_days": 20.04
+  },
+  "raw_counts": {
+    "total_payments": 7248641,
+    "wash_null_clean": 4000062,
+    "wash_null_classified": 808294,
+    "wash_null_mediated_1_facilitator": 292947,
+    "wash_null_mediated_0_p2p": 515347,
+    "distinct_from_wallets_clean": 487330,
+    "distinct_to_wallets_clean": 478621,
+    "mean_amount_usdc": 1.0857,
+    "endpoints_indexed": 22074
+  },
+  "derived": {
+    "classified_pct_of_clean": 20.21,
+    "wash_filter_reduction_pct": 44.8,
+    "facilitator_mediated_pct_of_classified": 36.24,
+    "p2p_pct_of_classified": 63.76,
+    "daily_clean_payments": 199603
+  },
+  "supersedes": {
+    "lockfile_2026_04_30_evening": {
+      "raw": 6448184,
+      "clean": 3409612,
+      "classified": 511716,
+      "classified_pct": 15.01,
+      "mediated_pct": 33.2,
+      "p2p_pct": 66.8,
+      "span_days": 18.4
+    }
+  },
+  "method": "wash_flag IS NULL = clean subset; classified subset = is_facilitator_mediated IS NOT NULL within clean; balance still mid-backfill against Base RPC eth_getTransactionByHash",
+  "note": "Backfill progressed monotonically: 13.0% (29.04 09:19) -> 15.01% (30.04 16:10) -> 20.21% (02.05 10:45). All deltas backfill progress, not query bugs."
+}
