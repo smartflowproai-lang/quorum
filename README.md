@@ -4,7 +4,7 @@ Five agents on a multi-continent AXL mesh, paying each other in x402, posting ru
 
 ETHGlobal OpenAgents · MIT · built by Tom Smart
 
-[![CI](https://github.com/smartflowproai-lang/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowproai-lang/quorum/actions) · [Live status dashboard](https://smartflowproai-lang.github.io/quorum/) · [BaseScan receipt](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
+[![CI](https://github.com/smartflowproai-lang/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowproai-lang/quorum/actions) · [Live status dashboard](https://smartflowproai-lang.github.io/quorum/) · [BaseScan attestation](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) · [BaseScan swap](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
 
 ---
 
@@ -24,7 +24,9 @@ ETHGlobal OpenAgents · MIT · built by Tom Smart
 
 First Treasurer swap, 2026-04-28:
 
-- **TX**: [`0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849)
+- **Verdict attestation TX (primary anchor)**: [`0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22`](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) — block 45,476,871, ed25519-signed canonical evidence hash from Frankfurt Judge + NYC Verifier, anchored on Base mainnet via Treasurer 0-value calldata-only TX (decode format documented in `logs/d10-quorum-attestation-tx.json`).
+- **Treasurer swap TX (Uniswap anchor)**: [`0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849) — 1 USDC → WETH via Universal Router + Permit2, real wallet, real money, real settlement (Day 4 receipt).
+- **Treasurer wallet**: `0xd779cE46…58C893` — EIP-7702 smart EOA (Pectra set-code delegate, production-grade account abstraction, not legacy EOA)
 - Block **45,300,516**, chainId **8453**
 - 1 USDC → WETH via Universal Router + Permit2 — the same path Treasurer drives programmatically
 - Verified live via `eth_getTransactionByHash` against `mainnet.base.org`
