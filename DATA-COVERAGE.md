@@ -2,7 +2,7 @@
 
 Explicit per-chain breakdown of every dataset QUORUM reads from. If a number appears in the README, the demo video, or a partner write-up, its origin is listed here.
 
-**Last verified**: 2026-04-30 16:10 UTC (numbers locked in `lockfile-2026-04-30-evening.json`; regenerated from `payments.db` on author's infrastructure). Supersedes earlier `numbers-ground-truth-lockfile-2026-04-28` lock.
+**Last verified**: 2026-05-02 10:45 UTC (most-recent state in `lockfile-2026-05-02-evening.json`; submission lock at `lockfile-2026-04-30-evening.json` 16:10 UTC superseded by 2 days of live backfill). Supersedes earlier `numbers-ground-truth-lockfile-2026-04-28` lock.
 
 ---
 
@@ -36,7 +36,7 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 - **Size at most-recent lock 2026-05-02 10:45 UTC**: 7,248,641 raw Base x402 payment candidates over a 20.04-day window (2026-04-12 09:05 → 2026-05-02 10:02 UTC); submission lock at `lockfile-2026-04-30-evening.json` superseded by 2 days of live backfill (6,448,184 raw → 7,248,641 raw, +12.4%).
 - **After wash filter**: 4,000,062 clean payments (44.8% removed as self-referential / dust / burst-pattern noise).
 - **Classified subset** (`is_facilitator_mediated IS NOT NULL` within clean): 808,294 = 20.21% of clean. Of those: 292,947 mediated (=1) / 515,347 P2P (=0).
-- **Wallet diversity (clean)**: 439,113 distinct from-wallets, 408,859 distinct to-wallets.
+- **Wallet diversity (clean)**: 487,330 distinct from-wallets, 478,621 distinct to-wallets (most-recent state `lockfile-2026-05-02-evening.json`; submission lock 439,113 / 408,859 at `lockfile-2026-04-30-evening.json`).
 - **Mean payment**: $1.086.
 - **Backfill progress note**: 13.0% (29.04 09:19 UTC) → 15.01% (30.04 16:10 UTC) → 20.21% (02.05 10:45 UTC). Monotonic backfill against Base RPC `eth_getTransactionByHash`; the gap to 100% is a backfill rate problem, not a query problem. The 29.04 lock published at smartflowproai.substack.com (commit `550cf5e`) is superseded by `lockfile-2026-04-30-evening.json` (submission lock) which is itself superseded as live state by `lockfile-2026-05-02-evening.json` (most-recent indexer state).
 

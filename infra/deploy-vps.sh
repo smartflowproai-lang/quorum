@@ -1,5 +1,4 @@
 #!/bin/bash
-# PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
 # Deploy QUORUM agents to Frankfurt VPS-A and NYC VPS-B via SSH + docker compose
 
 set -euo pipefail
