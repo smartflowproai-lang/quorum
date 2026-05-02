@@ -2,7 +2,7 @@
 
 **One line.** Five agents on a two-continent encrypted mesh, paying each other in x402, posting signed rug verdicts to Base mainnet — Scout + Judge in Frankfurt, Verifier + Executor + Treasurer in NYC.
 
-**Why now.** The x402 agent economy is real Base traffic — 6,448,184 raw payment candidates indexed across an 18.4-day window (2026-04-12 → 2026-04-30 18:02 UTC), 22,054 endpoints catalogued (locked in `lockfile-2026-04-30-evening.json`, regenerated from `payments.db` 2026-04-30 16:10 UTC; methodology in `DATA-COVERAGE.md`). What's missing is multi-continent verification: most "multi-agent" demos run four functions in one process. QUORUM physically separates verdict production (Frankfurt) from validation + settlement (NYC) and signs the roundtrip — the shape the next agent-pipelines will need.
+**Why now.** The x402 agent economy is real Base traffic — 7,248,641 raw payment candidates indexed across a 20.04-day window (2026-04-12 → 2026-05-02 10:02 UTC), 22,074 endpoints catalogued (most-recent state in `lockfile-2026-05-02-evening.json`; submission lock at `lockfile-2026-04-30-evening.json`; methodology in `DATA-COVERAGE.md`). The indexer kept backfilling between locks: 13.0% (29.04) → 15.01% (30.04) → 20.21% (02.05 lock) — production-grade live observatory, not a hackathon-window snapshot. What's missing is multi-continent verification: most "multi-agent" demos run four functions in one process. QUORUM physically separates verdict production (Frankfurt) from validation + settlement (NYC) and signs the roundtrip — the shape the next agent-pipelines will need.
 
 ## Five differentiators (each with a hard anchor)
 
@@ -10,7 +10,7 @@
 
 2. **On-chain mainnet receipt — not a testnet screenshot.** Treasurer wallet `0xd779cE46…58C893` swapped 1 USDC → WETH via Universal Router + Permit2. Anchor: tx [`0xc03b8350…79b49849`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849), block 45,300,516, chainId 8453, verified via `eth_getTransactionByHash` against `mainnet.base.org`.
 
-3. **Retraction discipline as a build asset.** I caught a numerator/denominator filter mismatch in the data-coverage figures and shipped the correction publicly: 32.7% → 13.0% (commit [`550cf5e`](https://github.com/smartflowproai-lang/quorum/commit/550cf5e) `fix: correct classified subset 32.7% → 13.0%`). Backfill has since progressed monotonically: 13.0% (29.04 09:19 UTC) → 15.01% (30.04 16:10 UTC, locked in `lockfile-2026-04-30-evening.json`). The deltas are backfill progress, not new query corrections.
+3. **Retraction discipline as a build asset.** I caught a numerator/denominator filter mismatch in the data-coverage figures and shipped the correction publicly: 32.7% → 13.0% (commit [`550cf5e`](https://github.com/smartflowproai-lang/quorum/commit/550cf5e) `fix: correct classified subset 32.7% → 13.0%`). Backfill has since progressed monotonically: 13.0% (29.04 09:19 UTC) → 15.01% (30.04 16:10 UTC, submission lock at `lockfile-2026-04-30-evening.json`) → 20.21% (02.05 10:45 UTC, most-recent state at `lockfile-2026-05-02-evening.json`). +5.2pt classified rate in 2 days. The indexer is actively backfilling against Base RPC; deltas are backfill progress, not new query corrections.
 
 4. **DATA-COVERAGE.md transparency split.** Every dataset is broken down by chain, scope, and what the project does NOT claim. Anchor: `DATA-COVERAGE.md` — EVM wallet graph (231,633 addresses, 100% EVM, zero Solana), Solana copy-bot archive (58,432 events, 14 curated wallets), x402 mapper (99.9% EVM / 0.78% Solana).
 
