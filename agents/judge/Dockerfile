@@ -1,4 +1,3 @@
-# PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
 FROM node:20-alpine
 WORKDIR /app
 COPY package.json ./

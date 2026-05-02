@@ -1,4 +1,3 @@
-# PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
 name: CI
 
 on:
@@ -19,12 +18,12 @@ jobs:
         run: cd shared && npm install --no-package-lock
       - name: Install agents
         run: |
-          for a in scout judge executor treasurer; do
+          for a in scout judge verifier executor treasurer; do
             cd agents/$a && npm install --no-package-lock && cd ../..
           done
       - name: Typecheck agents (allow fail in stub phase)
         run: |
-          for a in scout judge executor treasurer; do
+          for a in scout judge verifier executor treasurer; do
             cd agents/$a && (npx tsc --noEmit || echo "typecheck warnings for $a (stub phase, OK)") && cd ../..
           done
 
@@ -40,11 +39,11 @@ jobs:
         run: cd shared && npm install --no-package-lock
       - name: Install agents
         run: |
-          for a in scout judge executor treasurer; do
+          for a in scout judge verifier executor treasurer; do
             cd agents/$a && npm install --no-package-lock && cd ../..
           done
       - name: Run tests
         run: |
-          for a in scout judge executor treasurer; do
+          for a in scout judge verifier executor treasurer; do
             cd agents/$a && npm test --if-present && cd ../..
           done
