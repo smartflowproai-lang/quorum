@@ -65,3 +65,13 @@ demo/*.mov
 
 # Internal planning docs (OPSEC)
 .private/
+
+# Audit / working notes (kept outside repo to prevent accidental commit by git add -A)
+chain-stage*.md
+chain-stage*.log
+tom-morning-brief*.md
+opsec-final-sweep*.md
+preSubmit-*.md
+round2-qa-bank*.md
+overnight-chain*.sh
+overnight-watchdog*.sh

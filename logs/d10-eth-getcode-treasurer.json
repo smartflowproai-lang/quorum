@@ -1,0 +1,30 @@
+{
+  "context": "EIP-7702 set-code delegation evidence for QUORUM Treasurer wallet on Base mainnet. Confirms the wallet has an active set-code delegate (Pectra/EIP-7702), which is the basis for the README:28 claim that the wallet is an EIP-7702 smart EOA. Anyone can independently re-run the curl below.",
+  "treasurer_address": "0xd779cE46567d21b9918F24f0640cA5Ad6058C893",
+  "rpc_method": "eth_getCode",
+  "rpc_endpoint": "https://mainnet.base.org",
+  "captured_at_utc": "2026-05-02T20:42:17Z",
+  "captured_at_block": 45482595,
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "eth_getCode",
+    "params": [
+      "0xd779cE46567d21b9918F24f0640cA5Ad6058C893",
+      "latest"
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": "0xef010063c0c19a282a1b52b07dd5a65b58948a07dae32b",
+    "id": 1
+  },
+  "interpretation": {
+    "prefix": "0xef0100",
+    "prefix_meaning": "EIP-7702 set-code marker (per Pectra spec). Any code starting with 0xef0100 indicates the EOA has an active set-code delegation.",
+    "delegate_address": "0x63c0c19a282a1b52b07dd5a65b58948a07dae32b",
+    "delegate_meaning": "20-byte address following the 0xef0100 marker is the contract whose code the EOA executes when called. This is the implementation contract behind the smart EOA."
+  },
+  "verify_via_rpc": "curl -s -X POST -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"method\":\"eth_getCode\",\"params\":[\"0xd779cE46567d21b9918F24f0640cA5Ad6058C893\",\"latest\"],\"id\":1}' https://mainnet.base.org",
+  "verify_via_cast": "cast code 0xd779cE46567d21b9918F24f0640cA5Ad6058C893 --rpc-url https://mainnet.base.org"
+}
