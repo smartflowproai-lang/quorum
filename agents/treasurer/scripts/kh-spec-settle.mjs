@@ -3,9 +3,21 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { writeFileSync, readFileSync } from "node:fs";
 
-const envContent = readFileSync("/root/x402-api/.env", "utf8");
-const pkMatch = envContent.match(/GHOST_OWNER_KEY=([0-9a-fA-Fx]+)/);
-const TREASURER_PK = pkMatch[1];
+// Load Treasurer private key.
+// Prefer env var (TREASURER_PRIVATE_KEY); fall back to a parseable .env file
+// pointed to by TREASURER_ENV_FILE. No hardcoded paths or builder-specific
+// filesystem assumptions.
+function loadTreasurerKey() {
+  if (process.env.TREASURER_PRIVATE_KEY) return process.env.TREASURER_PRIVATE_KEY;
+  const envFile = process.env.TREASURER_ENV_FILE;
+  if (envFile) {
+    const envContent = readFileSync(envFile, "utf8");
+    const m = envContent.match(/^TREASURER_PRIVATE_KEY=(0x[0-9a-fA-F]+)\s*$/m);
+    if (m) return m[1];
+  }
+  throw new Error("TREASURER_PRIVATE_KEY env var not set. Run with: TREASURER_PRIVATE_KEY=0x... node kh-spec-settle.mjs (or set TREASURER_ENV_FILE to a .env file containing it).");
+}
+const TREASURER_PK = loadTreasurerKey();
 const account = privateKeyToAccount(TREASURER_PK);
 
 console.log("Treasurer:", account.address);

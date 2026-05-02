@@ -57,6 +57,5 @@
   "max_priority_fee_per_gas_wei": "0xf4240",
   "status": "success",
   "chain_id": "0x2105 (Base mainnet, 8453)",
-  "verify_via_rpc": "curl -s -X POST -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionReceipt\",\"params\":[\"0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409\"],\"id\":1}' https://mainnet.base.org",
-  "ts_decoded_local": "2026-05-02T21:45:00+02:00 (Europe/Warsaw)"
+  "verify_via_rpc": "curl -s -X POST -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionReceipt\",\"params\":[\"0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409\"],\"id\":1}' https://mainnet.base.org"
 }

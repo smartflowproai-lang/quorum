@@ -13,6 +13,8 @@ This document captures what I broke, how the mesh reacted, and how long it took 
 
 I drove the test from Frankfurt only. NYC SSH is not reachable under my current keys, so the "kill NYC verifier" case is simulated with iptables — from Frankfurt's point of view, packet drop to `159.65.172.200` is indistinguishable from NYC dying. The reverse direction (kill Frankfurt) is the real thing: `pm2 stop axl-frankfurt`.
 
+> **Note on test order:** Tests below are presented in topical order (process-kill → short-partition → long-partition). Real chronological order on 2026-04-30 was B → A → C (Test B at T0=18:10:46Z, Test A at T0=18:12:25Z, Test C at T0=18:13:23Z). Each section header carries its true T0 in the timeline table.
+
 ## Test A — Process kill on Frankfurt (`pm2 stop` / `pm2 start`)
 
 Worst case for the mesh: the local AXL process exits, every TCP socket is torn down by the kernel, ports get released. NYC sees its peer disappear immediately.
