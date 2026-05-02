@@ -11,7 +11,7 @@
 
 Five agents, two continents, one encrypted mesh, one verdict per Solana memecoin candidate. Scout watches 14 curated Solana smart-money wallets in Frankfurt; Judge scores candidates against an 18-day archive of 58,432 copy-bot events also in Frankfurt; Verifier independently validates each verdict in NYC and signs the attestation; Executor lands the signed attestation on Base via KeeperHub; Treasurer pays for every job with x402 and tops itself up via the Uniswap Trading API. Every agent has a separate ed25519 identity on the Gensyn AXL mesh. No central broker, no shared wallet, no human in the gas loop.
 
-The mesh is the point. Most "multi-agent" demos run four functions in one process and call it a system. QUORUM physically separates Scout + Judge in Frankfurt from Verifier + Executor + Treasurer in NYC — when I take the NYC node down mid-verdict, Frankfurt keeps producing candidates, queues messages, and drains them on reconnect. The bidirectional roundtrip across Frankfurt ↔ NYC was verified on 2026-04-24 (Day-1 init commit). The partition-recovery rig lands at `infra/chaos.sh` Day 7-8 alongside the chaos-test workflow.
+The mesh is the point. Most "multi-agent" demos run four functions in one process and call it a system. QUORUM physically separates Scout + Judge in Frankfurt from Verifier + Executor + Treasurer in NYC — when I take the NYC node down mid-verdict, Frankfurt keeps producing candidates, queues messages, and drains them on reconnect. The bidirectional roundtrip across Frankfurt ↔ NYC was verified on 2026-04-24 (Day-1 init commit). The partition-recovery rig is committed at `infra/chaos-axl-failover.sh` with run log at `logs/d8-chaos-recovery.log` and live mesh-state snapshot at `logs/d8-axl-mesh-current-state.json`.
 
 ---
 
@@ -42,11 +42,11 @@ Here's where I'm being narrow about claims I can prove on-chain right now. I'm n
 
 The interesting positioning isn't the volume — it's the integration shape. Treasurer demonstrates pay-with-any-token end-to-end on real x402 traffic: an autonomous agent that converts whatever it has into whatever the next service wants, on demand, without a human signing anything. That maps directly onto the Uniswap Trading API's stated design intent.
 
-Real x402 traffic context (my own observatory, 18.4-day window 2026-04-12 09:05 → 2026-04-30 18:02 UTC; numbers regenerated live against `payments.db` 2026-04-30 16:10 UTC and locked in `lockfile-2026-04-30-evening.json`; methodology in `DATA-COVERAGE.md`):
+Real x402 traffic context (my own observatory, 20.04-day window 2026-04-12 09:05 → 2026-05-02 10:02 UTC; most-recent state in `lockfile-2026-05-02-evening.json` regenerated 2026-05-02 10:45 UTC; submission lock at `lockfile-2026-04-30-evening.json` superseded by live backfill — see Update note below; methodology in `DATA-COVERAGE.md`):
 
 - 22,054 x402 endpoints catalogued across three primary registries plus tail sources
-- 6,448,184 raw Base x402 payment candidates → 3,409,612 clean payments after wash filter (47.1% removed as self-referential / dust / burst-pattern noise)
-- 439,113 distinct from-wallets, 408,859 distinct to-wallets across clean payments, mean payment $1.14
+- 7,248,641 raw Base x402 payment candidates → 4,000,062 clean payments after wash filter (44.8% removed as self-referential / dust / burst-pattern noise)
+- 487,330 distinct from-wallets, 478,621 distinct to-wallets across clean payments, mean payment $1.086
 - 61 facilitator-class signing addresses tracked (54 mapped Coinbase CDP + 7 pattern-inferred candidates — including a single high-volume unlabelled facilitator likely Bankr or Mogami, documented in methodology)
 - Caveat upfront: facilitator-vs-P2P classification currently complete for 15.01% / 511,716 of the clean subset; the 84.99% balance is still mid-backfill against Base RPC `eth_getTransactionByHash`. The facilitator-vs-P2P split holds only on the classified subset. Methodology and number-history at smartflowproai.substack.com (corrections logged inline).
 

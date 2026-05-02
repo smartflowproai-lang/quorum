@@ -33,11 +33,11 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 
 ## 3b. x402 Payment Index (`payments.db`)
 
-- **Size at lock 2026-04-30 16:10 UTC**: 6,448,184 raw Base x402 payment candidates over an 18.4-day window (2026-04-12 09:05 → 2026-04-30 18:02 UTC).
-- **After wash filter**: 3,409,612 clean payments (47.1% removed as self-referential / dust / burst-pattern noise).
+- **Size at most-recent lock 2026-05-02 10:45 UTC**: 7,248,641 raw Base x402 payment candidates over a 20.04-day window (2026-04-12 09:05 → 2026-05-02 10:02 UTC); submission lock at `lockfile-2026-04-30-evening.json` superseded by 2 days of live backfill (6,448,184 raw → 7,248,641 raw, +12.4%).
+- **After wash filter**: 4,000,062 clean payments (44.8% removed as self-referential / dust / burst-pattern noise).
 - **Classified subset** (`is_facilitator_mediated IS NOT NULL` within clean): 511,716 = 15.01% of clean. Of those: 169,740 mediated (=1) / 341,976 P2P (=0).
 - **Wallet diversity (clean)**: 439,113 distinct from-wallets, 408,859 distinct to-wallets.
-- **Mean payment**: $1.14.
+- **Mean payment**: $1.086.
 - **Backfill progress note**: 13.0% (29.04 09:19 UTC) → 15.01% (30.04 16:10 UTC). Monotonic backfill against Base RPC `eth_getTransactionByHash`; the gap to 100% is a backfill rate problem, not a query problem. The 29.04 lock published at smartflowproai.substack.com (commit `550cf5e`) is superseded by `lockfile-2026-04-30-evening.json`.
 
 ## 4. ERC-8004 Registry (read via 8004scan API)
