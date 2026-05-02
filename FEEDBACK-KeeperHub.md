@@ -15,6 +15,12 @@ That visibility shaped which KH items I prioritized. I'm not just guessing what 
 
 The integration has two surfaces: the human-builder onboarding (docs, dashboard, agentcash setup) and the agent-runtime surface (MCP `search_workflows` / `call_workflow`, x402 invoicing, retry semantics, webhook delivery). Items below mix both because both matter for autonomous-agent integrators.
 
+## Headline evidence (skip here for the production-endpoint validation)
+
+The single hardest claim in this file is **"the wire works against the live MCP"**. The most direct proof of that is **Item 8 below** — a paid `pack-0-10-demo` ($0.10 USDC) workflow call against `app.keeperhub.com/mcp` that returned a spec-compliant x402v2 challenge captured at `logs/d8-kh-x402-challenge-response.json`. The challenge shape (network/asset/amount/payTo/maxTimeoutSeconds/scheme) matches QUORUM's `X402Challenge` type one-for-one — type was built **before** the challenge was captured, so the spec match is anticipated, not retro-fitted.
+
+Items 1-7 below cover friction points and forward concerns surfaced during the build window. **Item 8 is the live integration validation** — judges short on time should jump there first.
+
 ---
 
 ## 1 — `search_workflows` MCP returns matches without a stable workflow-identifier guarantee
