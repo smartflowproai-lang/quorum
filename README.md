@@ -92,6 +92,29 @@ For the cross-host deploy (Frankfurt + NYC), see `infra/deploy-vps.sh`.
 
 ---
 
+## Development process
+
+QUORUM is a solo build. AI assistance is part of the workflow and is fully transparent in `git log` — every commit carries a `Co-Authored-By: Claude` trailer.
+
+**Builder responsibilities (human):**
+
+- Strategic direction — what to build, for which sponsor track, when to ship.
+- Architectural decisions — 5-agent shape, AXL choice, EIP-7702 wallet path, what's in scope vs cut.
+- Partner relationships — Divigent / aiprox.dev / AsterPay outreach and feedback intake; reading what each partner needs and shipping into their workflow.
+- Quality gates — which adversarial findings to apply, which framings to soften, which claims to retract. The 99.82% retraction (see Discipline notes section) is the canonical example: it took builder judgment to spot the methodology error and own it publicly.
+- All on-chain TX decisions — which transactions to send, with which wallet, at which moment, with how much capital exposure.
+- OPSEC — what's public vs private, what's pseudonymised, what gets force-pushed off the public surface when something leaks.
+
+**AI-assisted (Claude Opus 4.7):**
+
+- Code authoring — TypeScript agents, scripts, decoders.
+- Documentation drafting — this README, SUBMISSION, FEEDBACK files.
+- Adversarial reviews — the same model in fresh-context sessions reviewing its own prior work to catch flaws (the find-minimum-N-flaws pattern visible in the commit log as repeated "review → fix → re-review" loops).
+- Operational scripting — chaos tests, periodic attestation cycles, watchdog.
+
+The decisions about WHAT to build, FOR WHOM, and WHEN to ship are the builder's; the implementation typing is shared with AI. Per ETHGlobal rules: AI assists development, it does not replace builder judgment about what is worth building.
+
+
 ## License + credits
 
 MIT — see [LICENSE](./LICENSE).
