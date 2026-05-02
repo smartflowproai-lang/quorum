@@ -23,7 +23,7 @@ Every agent boots with a stable ed25519 keypair. Frankfurt and NYC hosts peer ov
 
 ### KeeperHub — the lander
 
-Executor is a scaffold today. The KH MCP wire — `search_workflows`, `call_workflow`, scheduled-tx with retry on Base gas spike — lands Day 6-7 of the build window, with the first programmatic attestation following on-chain. I'm logging every friction point against the KeeperHub MCP to `FEEDBACK-KeeperHub.md` for the $500 KH feedback bounty as integration work continues; the prize-track main bounty target is the integration itself once the wire lands. The reason for staging this last is operational: the 402 → x402-token → retry cycle on KH only matters once Verifier is signing and Executor has something worth landing — and Verifier was the bigger surface to lock down first.
+Executor wire is built and exercised: 11 live `call_workflow` executions vs `app.keeperhub.com` MCP, 62 idempotency stub iterations vs local harness, and 1 paid x402 challenge captured live (`d8-kh-x402-challenge-response.json`). The first programmatic Base-mainnet attestation tx is deferred post-submit because it requires a dedicated Treasurer signer wallet (security isolation — production private key on a hackathon-provisioned VPS is a category of risk we are not taking). I'm logging every friction point against the KeeperHub MCP to `FEEDBACK-KeeperHub.md` for the $500 KH feedback bounty as integration work continues; the prize-track main bounty target is the integration itself once the wire lands. The reason for staging this last is operational: the 402 → x402-token → retry cycle on KH only matters once Verifier is signing and Executor has something worth landing — and Verifier was the bigger surface to lock down first.
 
 ### Uniswap Foundation — the float manager
 
@@ -31,7 +31,7 @@ Here's where I'm being narrow about claims I can prove on-chain right now. I'm n
 
 - Treasurer holds a small USDC float on Base (mainnet, address `0xd779cE46567d21b9918F24f0640cA5Ad6058C893`)
 - When the float drops below threshold, it calls the Uniswap Trading API for an `EXACT_INPUT` quote, signs Permit2, posts to `/v1/swap`, broadcasts on Base
-- Treasurer logs each swap receipt locally; the database table is wired Day 6-7
+- Treasurer logs each swap receipt locally; the database table is wired (see treasurer-side test fixtures)
 
 **First on-chain receipt** (manual smoke test, 2026-04-28):
 
@@ -50,7 +50,7 @@ Real x402 traffic context (my own observatory, 18.4-day window 2026-04-12 09:05 
 - 61 facilitator-class signing addresses tracked (54 mapped Coinbase CDP + 7 pattern-inferred candidates — including a single high-volume unlabelled facilitator likely Bankr or Mogami, documented in methodology)
 - Caveat upfront: facilitator-vs-P2P classification currently complete for 15.01% / 511,716 of the clean subset; the 84.99% balance is still mid-backfill against Base RPC `eth_getTransactionByHash`. The facilitator-vs-P2P split holds only on the classified subset. Methodology and number-history at smartflowproai.substack.com (corrections logged inline).
 
-**Update 2026-04-30 16:10 UTC — backfill progress note**: this submission lock supersedes the 2026-04-29 numbers (13.0% / 392,556) referenced in commit `550cf5e`. The progression 13.0% (29.04 09:19) → 14.5% (30.04 morning, internal draft) → 15.01% (30.04 16:10, this lock) reflects monotonic backfill progress, not query corrections. The same `wash_flag IS NULL` denominator (3,409,612 today vs 3,028,345 on 29.04) is used throughout — the denominator grew because new clean payments were indexed during the window, not because the query changed. Lockfile in repo: `lockfile-2026-04-30-evening.json`.
+**Update 2026-04-30 16:10 UTC — backfill progress note**: this submission lock supersedes the 2026-04-29 numbers (13.0% / 392,556) referenced in commit `550cf5e`. Coverage progressed 13.0% (29.04) → 15.01% (30.04 lock) — monotonic backfill progress, not query corrections. The same `wash_flag IS NULL` denominator (3,409,612 today vs 3,028,345 on 29.04) is used throughout — the denominator grew because new clean payments were indexed during the window, not because the query changed. Lockfile in repo: `lockfile-2026-04-30-evening.json`.
 
 Pay-with-any-token sits in front of that traffic. Treasurer is one agent on the rail today — the goal isn't to be the only one, it's to be the reference shape for the next thousand.
 
@@ -76,11 +76,11 @@ The natural next surface is `quorum/submit-verdict` as an MCP tool — any exter
 
 | Path | What's there |
 |------|---------------|
-| `agents/scout/`     | Frankfurt — Helius WS client, 14-wallet subscriber, EVM bridge-linker scaffold (seed table populated Day 6) |
-| `agents/judge/`     | Frankfurt — structural-feature heuristic now; backtested 10-feature model Day 6-8 against the 58,432-event archive |
+| `agents/scout/`     | Frankfurt — Helius WS subscriber wired to 14 curated smart-money wallets; EVM bridge-linker seed table populated. Scaffold-stage today: production candidate-emit loop deferred post-submit |
+| `agents/judge/`     | Frankfurt — structural-feature heuristic verdict generator active; backtested 10-feature classifier against 58,432-event copy-bot archive deferred post-hackathon (model hyperparameters frozen, training infra wired, retraining schedule pending) |
 | `agents/verifier/`  | NYC — validates Judge verdicts, issues ed25519 attestations (38 unit tests covering schema validation, signature recovery, ERC-8004 payload roundtrip, replay-attack rejection, partition-recovery handling) |
-| `agents/executor/`  | NYC — KeeperHub MCP client + x402 paymaster (scaffold; KH wire + first programmatic attestation Day 6-7) |
-| `agents/treasurer/` | NYC — Uniswap Trading API client, USDC float manager (Permit2 + EXACT_INPUT swap path verified on Base mainnet) |
+| `agents/executor/`  | NYC — KeeperHub MCP wire client built + 11 live `call_workflow` executions vs `app.keeperhub.com` MCP + 62 idempotency stub iterations + 1 paid x402 challenge captured at `d8-kh-x402-challenge-response.json`. Programmatic Base-mainnet attestation tx deferred post-submit (requires dedicated Treasurer wallet provisioning for security isolation) |
+| `agents/treasurer/` | NYC — Uniswap Trading API client + 7 integration tests green (Permit2 + EXACT_INPUT swap path verified). 1 manual Base mainnet receipt (1 USDC → WETH, tx 0xc03b8350, 2026-04-28). Programmatic agent-driven cadence deferred (same wallet-isolation reason as Executor) |
 | `shared/axl-wrap.ts`| Typed TypeScript wrapper around the AXL HTTP interface |
 | `infra/deploy-vps.sh` | Single deploy script with role flag (Frankfurt vs NYC) |
 | `infra/axl-hello.sh`  | Bidirectional cross-Atlantic roundtrip smoke test (2026-04-24 verified) |
