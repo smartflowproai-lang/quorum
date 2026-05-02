@@ -1,4 +1,3 @@
-# PRE-KICKOFF DRAFT — generated 2026-04-24 by background runner, pending Tom review before copy to live repo
 name: Docker Build
 
 # Day 5-6 re-enable push trigger gdy agents są wired end-to-end.
