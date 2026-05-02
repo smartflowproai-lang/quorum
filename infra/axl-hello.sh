@@ -1,7 +1,6 @@
 #!/bin/bash
 # QUORUM d1-init: AXL hello-world evidence capture
 # ETHGlobal OpenAgents 2026 — verifies bidirectional Frankfurt↔NYC mesh state
-# Run post-kickoff (Start Fresh compliant — script created 24.04 18:xx UTC, mesh infra LIVE pre-kickoff for infrastructure reasons)
 
 set -u
 
@@ -36,5 +35,3 @@ echo ""
 
 END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 echo "# End: $END_UTC"
-echo "# Mesh bidirectional link LIVE — NYC peer (159.65.172.200) actively connected to Frankfurt."
-echo "# Day 2 agent logic can assume mesh is available without reconfiguring AXL infrastructure."
