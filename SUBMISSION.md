@@ -11,7 +11,7 @@
 
 Five agents, two continents, one encrypted mesh, one verdict per Solana memecoin candidate. Scout watches 14 curated Solana smart-money wallets in Frankfurt; Judge scores candidates against an 18-day archive of 58,432 copy-bot events also in Frankfurt; Verifier independently validates each verdict in NYC and signs the attestation; Executor lands the signed attestation on Base via KeeperHub; Treasurer pays for every job with x402 and tops itself up via the Uniswap Trading API. Every agent has a separate ed25519 identity on the Gensyn AXL mesh. No central broker, no shared wallet, no human in the gas loop.
 
-The mesh is the point. Most "multi-agent" demos run four functions in one process and call it a system. QUORUM physically separates Scout + Judge in Frankfurt from Verifier + Executor + Treasurer in NYC — when I take the NYC node down mid-verdict, Frankfurt keeps producing candidates, queues messages, and drains them on reconnect. The TLS peer link across Frankfurt ↔ NYC was verified on 2026-04-24 (Day-1 init commit, `infra/axl-hello.sh`); the application-layer signed roundtrip evidence is the Day-10 verdict attestation TX `0x19bb1d0e...e1763f22` on Base mainnet — calldata contains canonical evidence hash signed by both Frankfurt Judge and NYC Verifier ed25519 keys, publicly verifiable. The partition-recovery rig is committed at `infra/chaos-axl-failover.sh` with run log at `logs/d8-chaos-recovery.log` and live mesh-state snapshot at `logs/d8-axl-mesh-current-state.json`.
+The mesh is the point. Most "multi-agent" demos run four functions in one process and call it a system. QUORUM physically separates Scout + Judge in Frankfurt from Verifier + Executor + Treasurer in NYC — when I take the NYC node down mid-verdict, Frankfurt keeps producing candidates, queues messages, and drains them on reconnect. The TLS peer link across Frankfurt ↔ NYC was verified on 2026-04-24 (Day-1 init commit, `infra/axl-hello.sh`); the application-layer signed roundtrip evidence is the 2026-05-02 verdict attestation TX `0x19bb1d0e...e1763f22` on Base mainnet — calldata contains canonical evidence hash signed by both Frankfurt Judge and NYC Verifier ed25519 keys, publicly verifiable. The partition-recovery rig is committed at `infra/chaos-axl-failover.sh` with run log at `logs/d8-chaos-recovery.log` and live mesh-state snapshot at `logs/d8-axl-mesh-current-state.json`.
 
 ---
 
@@ -127,7 +127,7 @@ Every claim above maps to a checked-in artifact a judge can open without running
 | 2026-04-25 | `dbf4367` d2-scout (#b) | Helius WS reconnect/heartbeat + 14-wallet subscribe stub |
 | 2026-04-26 | `2c86fe0` d2-submission | SUBMISSION.md scaffold, README voice polish |
 | 2026-04-27 | `a20bd93` opsec | Remove internal planning docs from public repo |
-| 2026-04-28 | `b94414e` Day-4 receipt | First on-chain Basescan receipt (Day 4 of build window 2026-04-24 → 2026-05-03; 1-USDC manual smoke test) |
+| 2026-04-28 | `b94414e` 2026-04-28 receipt | First on-chain Basescan receipt (day 5 of build window (counting Day 1 = 2026-04-24, the receipt landed 2026-04-28) 2026-04-24 → 2026-05-03; 1-USDC manual smoke test) |
 | 2026-04-28 | `6295be7` d4-treasurer (#1) | Uniswap Trading API + Permit2 + x402 pay-with-any-token implementation |
 | 2026-04-28 | `19d47bf` d5-verifier (#2) | Verifier extended (validator + attestation + AXL handler, 38 unit tests passing) |
 | 2026-04-28 | `40bfe51` d5-feedback (#4) | FEEDBACK-UNISWAP.md (7 pain points + what worked) |

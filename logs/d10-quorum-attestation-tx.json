@@ -1,26 +1,26 @@
 {
-  "tx_hash": "0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22",
-  "basescan_url": "https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22",
+  "tx_hash": "0x5205bb5002055b1dace5f3843d46583d987c358014767fabf00b05ea8f657e07",
+  "basescan_url": "https://basescan.org/tx/0x5205bb5002055b1dace5f3843d46583d987c358014767fabf00b05ea8f657e07",
   "treasurer_address": "0xd779cE46567d21b9918F24f0640cA5Ad6058C893",
   "payload": {
     "protocol": "QUORUM",
     "version": "1.0",
     "case_id": "quorum-attestation-demo-1",
     "claim": "5-agent mesh cross-validation: Judge (Frankfurt) and Verifier (NYC) independently signed canonical evidence hash, Treasurer anchored signed verdict on Base mainnet via 0-value calldata-only transaction.",
-    "evidence_hash": "46ae07962dfc49c485276d9c2b936eefb7930d2e61b03073455fb551f138078e",
-    "judge_pubkey_hex": "302a300506032b65700321006ed2e800a888d084c2e6a07191de0debdd2e54a083accd52ce334304915e04ee",
-    "verifier_pubkey_hex": "302a300506032b6570032100f28d9ef3fe8110d3d53a1dd1bb36fc55f0a0f31c9e8f9d692420522ae0afcc3f",
+    "evidence_hash": "ba2ab4ad4149a339f03b8a8923439cd58211f57b9523a0f54f919bc18440040d",
+    "judge_pubkey_hex": "302a300506032b65700321009df54d38fad83944b0708e9d9e4ed02d5983e67abd3731ee17ae9452bfff4a32",
+    "verifier_pubkey_hex": "302a300506032b65700321008097f92404f1cbdf856e5cb2a3a271ad90a4aeb68604aea6750f7304001989e7",
     "judge_role": "frankfurt",
     "verifier_role": "nyc",
     "verdict": "PASS",
-    "ts": "2026-05-02T17:31:26.189Z"
+    "ts": "2026-05-02T18:35:37.855Z"
   },
-  "judge_sig_hex": "30a3368ef27ad01e4f71a540853260e68fab123c6b74e6d235cb74dd2c43a8f58ce1cab096316142c1db3c240efb147cd633710223a39c2883e8a451ffe86105",
-  "verifier_sig_hex": "f1b42af7ae49cb5c6fbc54ae4565caa9a21ccef9532b4eedd341b37436b3ec0e994a7b49cd434e78144c4139e9d4c85a83072dbc889195f3f5dd7a24b8b7950d",
+  "judge_sig_hex": "c0ca61b5ab7c23bc1c4c8edee26a4f28d462a2c7fecfb6401ac944b25874ad6e7e0f1607d2a9eb3aa4200758e74fecaf6312bc997564a4319b5442f96ca1e309",
+  "verifier_sig_hex": "4c097e80d60d987cabbf2176186665ed5716c42c6ea9297b6e0c200cbd78fd1642d2fd81d4267c88503a2d4010c87258075fd976d8bad1009a4c6ff6b57de707",
   "calldata_size_bytes": 828,
   "decode_instructions": "calldata format: 8 bytes ASCII marker QUORUMV1, 2 bytes payload length uint16 BE, payload JSON UTF-8, 64-byte judge ed25519 sig, 64-byte verifier ed25519 sig",
-  "ts_submitted": "2026-05-02T17:31:26.189Z",
-  "block_number": "45476871",
+  "ts_submitted": "2026-05-02T18:35:37.855Z",
+  "block_number": "45478797",
   "status": "success",
-  "gas_used_actual": "54120"
+  "gas_used_actual": "54090"
 }
