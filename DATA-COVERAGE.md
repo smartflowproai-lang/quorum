@@ -26,7 +26,7 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 
 ## 3. x402 Endpoint Mapper (`mapper.db`)
 
-- **Size**: 22,054 registered endpoints (canonical figure used across SUBMISSION / FEEDBACK / JUDGE_INTRO; snapshot fed forward from 2026-04-29 mapper run).
+- **Size**: 22,074 registered endpoints (canonical figure used across SUBMISSION / FEEDBACK / JUDGE_INTRO; latest mapper.db backup snapshot 2026-05-02; submission lock 22,054 from 2026-04-29 mapper run superseded by +20 new endpoints).
 - **Chain composition**: **99.9% EVM (Base + Ethereum + misc EVM L2s) / 0.78% Solana**. Publicly reported.
 - **Source**: author's x402 network mapper, authored 2026-Q1 through 2026-04-17.
 - **What QUORUM uses it for**: pitch-level ecosystem context only ("agent economy has a trust crisis"). Not a runtime data source for agent logic.
@@ -35,10 +35,10 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 
 - **Size at most-recent lock 2026-05-02 10:45 UTC**: 7,248,641 raw Base x402 payment candidates over a 20.04-day window (2026-04-12 09:05 → 2026-05-02 10:02 UTC); submission lock at `lockfile-2026-04-30-evening.json` superseded by 2 days of live backfill (6,448,184 raw → 7,248,641 raw, +12.4%).
 - **After wash filter**: 4,000,062 clean payments (44.8% removed as self-referential / dust / burst-pattern noise).
-- **Classified subset** (`is_facilitator_mediated IS NOT NULL` within clean): 511,716 = 15.01% of clean. Of those: 169,740 mediated (=1) / 341,976 P2P (=0).
+- **Classified subset** (`is_facilitator_mediated IS NOT NULL` within clean): 808,294 = 20.21% of clean. Of those: 292,947 mediated (=1) / 515,347 P2P (=0).
 - **Wallet diversity (clean)**: 439,113 distinct from-wallets, 408,859 distinct to-wallets.
 - **Mean payment**: $1.086.
-- **Backfill progress note**: 13.0% (29.04 09:19 UTC) → 15.01% (30.04 16:10 UTC). Monotonic backfill against Base RPC `eth_getTransactionByHash`; the gap to 100% is a backfill rate problem, not a query problem. The 29.04 lock published at smartflowproai.substack.com (commit `550cf5e`) is superseded by `lockfile-2026-04-30-evening.json`.
+- **Backfill progress note**: 13.0% (29.04 09:19 UTC) → 15.01% (30.04 16:10 UTC) → 20.21% (02.05 10:45 UTC). Monotonic backfill against Base RPC `eth_getTransactionByHash`; the gap to 100% is a backfill rate problem, not a query problem. The 29.04 lock published at smartflowproai.substack.com (commit `550cf5e`) is superseded by `lockfile-2026-04-30-evening.json` (submission lock) which is itself superseded as live state by `lockfile-2026-05-02-evening.json` (most-recent indexer state).
 
 ## 4. ERC-8004 Registry (read via 8004scan API)
 
