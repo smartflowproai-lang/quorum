@@ -42,7 +42,7 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 
 ## 4. ERC-8004 Registry (read via 8004scan API)
 
-- **Snapshot**: 151,370 agents registered as of 2026-04-17.
+- **Snapshot**: 151,370 agents registered (mid-April 2026 snapshot via 8004scan API; observatory polls weekly).
 - **Chains**: Base + Ethereum (ERC-8004 canonical deployments).
 - **What QUORUM uses it for**: self-registration. QUORUM's five agents (Scout / Judge / Verifier / Executor / Treasurer) each register on ERC-8004 Day 7, making the agent mesh discoverable in the same registry judges and external agents are watching.
 - **What QUORUM does NOT do**: lookup Solana memecoin contract deployers in ERC-8004. The 151K registry is dominated by AI agents, MCP servers, and infrastructure — not memecoin deployer addresses. That cross-reference would fire on <1% of cases.
