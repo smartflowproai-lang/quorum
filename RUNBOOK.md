@@ -51,4 +51,4 @@ Documented in `CHAOS-TEST.md`.
 cd agents/verifier && npm test
 ```
 
-Expected: 38 unit tests green (schema, ed25519 signature, ERC-8004 roundtrip, replay-attack rejection).
+Expected: 42 unit tests green (schema, ed25519 signature, ERC-8004 roundtrip, replay-attack rejection, pollLoop drain + boundary defenses + non-string-data guard).
