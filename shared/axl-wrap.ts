@@ -48,6 +48,12 @@ export interface AxlEnvelope {
   data: string;
   /** Unix epoch ms from the receiving node */
   ts: number;
+  /**
+   * Parsed payload, set by callers after JSON.parse(data). Optional
+   * because raw envelopes from /recv don't include it; verifier and
+   * judge populate it after parsing.
+   */
+  payload?: unknown;
 }
 
 /** Backwards-compatible alias used by verifier and judge imports. */
