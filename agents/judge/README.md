@@ -58,7 +58,10 @@ npm run build
 npm start
 ```
 
-## Day 4 TODO
+## Post-hackathon roadmap
+
+Heuristic verdict generator is active during the build window; the items below are
+deferred to the post-hackathon backtest cycle (per `SUBMISSION.md:80` honest framing).
 
 - Load backtested logistic regression weights from `model-weights.json`
 - Add feature: wallet age (days since first Solana tx)

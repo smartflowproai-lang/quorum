@@ -7,7 +7,9 @@ const AGENT_ID = "executor";
 
 async function main() {
   console.log(`[${AGENT_ID}] starting — awaiting judge verdicts`);
-  // TODO Day-5: KeeperHub MCP integration, attestation POST to Base via ERC-8004
+  // Production KH MCP integration lives in agents/executor/keeperhub-wire/
+  // (1 live session converged ok=11/12 + paid x402 settlement on-chain — see SUBMISSION:82).
+  // This entrypoint is the AXL receive loop that hands verdicts to that subsystem.
   while (true) {
     const msg = await axlReceive(AGENT_ID).catch(() => null);
     if (!msg) { await new Promise((r) => setTimeout(r, 1000)); continue; }
