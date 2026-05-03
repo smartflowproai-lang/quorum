@@ -1,6 +1,6 @@
 name: Docker Build
 
-# Day 5-6 re-enable push trigger gdy agents są wired end-to-end.
+# Day 5-6 re-enable push trigger when agents are wired end-to-end.
 # Day 1-4: manual via `gh workflow run "Docker Build"` if needed.
 on:
   workflow_dispatch:
