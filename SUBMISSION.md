@@ -95,7 +95,7 @@ The natural next surface is `quorum/submit-verdict` as an MCP tool — any exter
 
 All QUORUM agent code in this repo was written between 2026-04-24 and 2026-05-03 inside the OpenAgents build window. The three external data sources Scout/Judge consume (Helius copy-bot stream, EVM wallet graph, x402 endpoint index) are pre-existing public infrastructure I was already running before the window opened — see `DATA-COVERAGE.md` for the breakdown.
 
-I used Claude Code (Anthropic) for scaffolding, code review, and documentation drafting. Architectural decisions, partner-track positioning, scoring feature selection, and final approval are mine. Per-commit AI-assistance attribution lives in commit messages.
+I used Claude Code (Anthropic) as a coding assistant during the build window — for scaffolding, code review, and documentation drafting. Architecture, partner-track positioning, scoring feature selection, OPSEC framing, and every shipping decision are mine. The integration debugging, the on-chain receipts, the cross-continent deployment, and the public retraction discipline (32.7% → 13.0% correction shipped publicly) are work I own outright.
 
 ---
 

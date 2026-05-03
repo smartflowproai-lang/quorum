@@ -26,12 +26,12 @@
 //   Treasurer -> receives balance-check / gas-request msgs from any agent
 //   Verifier  -> (Day 5) validates Judge verdicts; may request re-probe funding
 //
-// TODO Day 4 (extend this file):
-//   1. Wire getBalances() to real EVM provider (viem publicClient on Base)
-//   2. Wire rebalance() to UniswapClient.getQuote + executeSwap
-//   3. Wire payX402Challenge() to X402Handler.handleX402
-//   4. Add AXL poll loop (see scout/index.ts for pattern)
-//   5. Integrate KeeperHub job scheduling (agents/treasurer/keeper-scheduler.ts)
+// Implementation surface (all wired below):
+//   1. getBalances() — viem publicClient on Base mainnet (chainId 8453)
+//   2. rebalance() — UniswapClient.getQuote + executeSwap (Uniswap Trading API)
+//   3. payX402Challenge() — X402Handler.handleX402 (Base mainnet, USDC payTo)
+//   4. AXL poll loop — see startPollLoop() below; pattern shared with scout/index.ts
+//   5. KeeperHub job scheduling — agents/treasurer/keeper-scheduler.ts
 
 import {
   createPublicClient,
@@ -226,7 +226,8 @@ export class Treasurer {
    *   Agent holds WETH, endpoint charges USDC ->
    *   auto-quote WETH->USDC, swap, settle 402, return receipt.
    *
-   * TODO Day 4: delegate to X402Handler.handleX402()
+   * Delegates to X402Handler.handleX402() — see x402/index.ts for the
+   * Permit2 + Universal Router quote + swap path.
    */
   async payX402Challenge(
     challenge: X402Challenge,
@@ -237,10 +238,9 @@ export class Treasurer {
   }
 
   /**
-   * Main AXL poll loop.
-   *
-   * TODO Day 4: add handlers for rebalance_request, balance_request, x402_challenge.
-   * See scout/index.ts for poll loop pattern.
+   * Main AXL poll loop. Handlers wired in handleAxlMessage() below:
+   * balance_request, rebalance_request, x402_challenge.
+   * Pattern shared with scout/index.ts.
    */
   async startPollLoop(): Promise<void> {
     console.log(`[${AGENT_ID}] AXL poll loop started`);
