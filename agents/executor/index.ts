@@ -1,21 +1,35 @@
-// EXECUTOR agent — receives verdicts from Judge, posts attestations via KeeperHub MCP on Base
-// Day-5 work: KeeperHub MCP wire, ERC-8004 attestation submission, retry logic
+// EXECUTOR agent — thin AXL receive stub that forwards verdict events
+// to the gas-request flow against Treasurer.
+//
+// The production KH MCP integration lives in agents/executor/keeperhub-wire/
+// (1 live session converged ok=11/12 + paid x402 settlement landed on-chain
+// — see SUBMISSION:82). The wire-and-attestation autonomous cadence is
+// post-hackathon work: today's KH paid settlement is a supervised one-shot
+// receipt, not an agent-driven loop.
 
-import { axlSend, axlReceive } from "../../shared/axl-wrap";
+import { axlSend, axlRecv } from "../../shared/axl-wrap";
 
 const AGENT_ID = "executor";
 
 async function main() {
-  console.log(`[${AGENT_ID}] starting — awaiting judge verdicts`);
-  // Production KH MCP integration lives in agents/executor/keeperhub-wire/
-  // (1 live session converged ok=11/12 + paid x402 settlement on-chain — see SUBMISSION:82).
-  // This entrypoint is the AXL receive loop that hands verdicts to that subsystem.
+  console.log(`[${AGENT_ID}] starting — awaiting judge verdicts (AXL drain loop)`);
   while (true) {
-    const msg = await axlReceive(AGENT_ID).catch(() => null);
-    if (!msg) { await new Promise((r) => setTimeout(r, 1000)); continue; }
-    console.log(`[${AGENT_ID}] verdict received:`, msg);
-    // stub: log + request gas from treasurer
-    await axlSend("treasurer", { agent: AGENT_ID, request: "gas", amount_usdc: "0.10" }).catch((e) => console.error(e));
+    // Drain all envelopes per poll — axlRecv() clears the queue, so single-shot
+    // takes only one envelope and loses any others arriving in the same window.
+    const envelopes = await axlRecv().catch((e: Error) => {
+      console.warn(`[${AGENT_ID}] axlRecv error (will retry):`, e.message);
+      return [];
+    });
+    for (const envelope of envelopes) {
+      console.log(`[${AGENT_ID}] verdict received from ${envelope.from}`);
+      // Stub forwarding: request 0.10 USDC gas from Treasurer per verdict.
+      // Real KH wire (paid settlement on-chain) lives in keeperhub-wire/.
+      await axlSend("treasurer", { agent: AGENT_ID, request: "gas", amount_usdc: "0.10" })
+        .catch((e: Error) => console.error(`[${AGENT_ID}] axlSend error:`, e.message));
+    }
+    if (envelopes.length === 0) {
+      await new Promise((r) => setTimeout(r, 1000));
+    }
   }
 }
 

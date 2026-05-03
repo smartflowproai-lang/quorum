@@ -30,7 +30,7 @@ npm start  # boots the AXL poll loop
 | `VERIFIER_POLL_INTERVAL_MS`     | 1000  | AXL receive poll spacing |
 | `AXL_ATTEST_TARGET`             | executor | peer that gets `attestation` |
 | `AXL_REPROBE_TARGET`            | judge | peer that gets `reprobe_request` |
-| `QUORUM_REQUIRE_AXL_SIG`        | (unset) | when `true`, every inbound msg must verify via `axlVerify` |
+| `QUORUM_REQUIRE_AXL_SHAPE`      | (unset) | when `true`, every inbound envelope must pass `axlVerifyShape` (structural check only — not cryptographic signature; long-lived per-host signing keys deferred post-hackathon). Old name `QUORUM_REQUIRE_AXL_SIG` accepted with deprecation warning. |
 | `VERIFIER_FRESHNESS_MS`         | 60000 | reject msgs whose `ts` falls outside ±this window |
 | `VERIFIER_PEER_RATE`            | 60    | per-peer token-bucket capacity (per minute) |
 | `VERIFIER_ATTEST_LOG`           | `~/.quorum/verifier-attestations.jsonl` | JSONL log path |

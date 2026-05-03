@@ -26,12 +26,15 @@
 //   Treasurer -> receives balance-check / gas-request msgs from any agent
 //   Verifier  -> (Day 5) validates Judge verdicts; may request re-probe funding
 //
-// Implementation surface (all wired below):
-//   1. getBalances() — viem publicClient on Base mainnet (chainId 8453)
-//   2. rebalance() — UniswapClient.getQuote + executeSwap (Uniswap Trading API)
-//   3. payX402Challenge() — X402Handler.handleX402 (Base mainnet, USDC payTo)
-//   4. AXL poll loop — see startPollLoop() below; pattern shared with scout/index.ts
-//   5. KeeperHub job scheduling — agents/treasurer/keeper-scheduler.ts
+// Implementation surface (in this file unless noted):
+//   1. getBalances() — viem publicClient on Base mainnet (chainId 8453) ✓
+//   2. rebalance() — UniswapClient.getQuote + executeSwap (Uniswap Trading API) ✓
+//   3. payX402Challenge() — X402Handler.handleX402 (Base mainnet, USDC payTo) ✓
+//   4. AXL poll loop (drain pattern) — see startPollLoop() below ✓
+//   5. KeeperHub job scheduling — deferred post-hackathon. The KH wire today is
+//      paid-settlement-on-receipt (see agents/executor/keeperhub-wire/, the
+//      0xce40d380 receipt on Base mainnet); agent-driven cron-style scheduling
+//      against KH workflow runs is the cadence work that follows.
 
 import {
   createPublicClient,
