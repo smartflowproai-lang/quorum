@@ -17,4 +17,4 @@
 
 Per-persona scoring: OZ ADVANCE WITH MINOR (security posture fine, documentation hygiene was the half-grade). Coinbase eng ADVANCE WITH RESERVATIONS (KH x402 settlement + EIP-7702 eth_getCode evidence solid; FLAW #1 contradiction was the burn). Gensyn liaison ADVANCE (chaos-test artifact genuinely good, cross-continent framing tightening per FLAW #5 will make it cleaner).
 
-**Reference**: full multi-persona review held offline at `Projekty/Krypto/quorum-prep/post-fixes-adversarial-mac-2026-05-03.md` (ETHGlobal builder vault, untracked). Summary preserved here for pre-commit-hook compliance.
+**Reference**: full multi-persona review held offline (untracked per audit-notes .gitignore patterns). Summary preserved here for ETHGlobal pre-commit-hook compliance.

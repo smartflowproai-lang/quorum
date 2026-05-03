@@ -236,8 +236,19 @@ export async function pollLoop(
   while (iterations === undefined || i < iterations) {
     const msg = await axlReceive(AGENT_ID).catch(() => null);
     if (msg) {
+      // Raw envelopes from /recv carry payload as a JSON string in `data`.
+      // handleMessage operates on the parsed `payload` field, so populate it
+      // here. Invalid JSON is dropped with a warning — never crashes the loop.
+      let parsed: unknown;
       try {
-        await handleMessage(msg, deps);
+        parsed = JSON.parse(msg.data);
+      } catch {
+        console.warn(`[${AGENT_ID}] dropping message with invalid JSON from ${msg.from}`);
+        i++;
+        continue;
+      }
+      try {
+        await handleMessage({ ...msg, payload: parsed }, deps);
       } catch (err) {
         // Log the error type but never the raw message — RPC errors can carry secrets.
         console.error(`[${AGENT_ID}] handler error:`, (err as Error).name);
