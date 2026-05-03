@@ -14,7 +14,7 @@
 
 4. **DATA-COVERAGE.md transparency split.** Every dataset is broken down by chain, scope, and what the project does NOT claim. Anchor: `DATA-COVERAGE.md` — EVM wallet graph (231,633 addresses, 100% EVM, zero Solana), Solana copy-bot archive (58,432 events, 14 curated wallets), x402 mapper (99.9% EVM / 0.78% Solana).
 
-5. **Verifier hardened independently.** 42 unit tests covering schema validation, ed25519 signature recovery, ERC-8004 payload roundtrip, replay-attack rejection, partition-recovery, pollLoop drain + boundary defenses + non-string-data guard. Anchor: commit [`19d47bf`](https://github.com/smartflowproai-lang/quorum/commit/19d47bf), `agents/verifier/verifier.test.ts`, all 42 passing locally (CI runs `npm test --if-present` per agent — verifier is the only agent with shipped test scripts today; honest framing).
+5. **Verifier hardened independently.** 42 unit tests covering schema validation, ed25519 signature recovery, ERC-8004 payload roundtrip, replay-attack rejection, partition-recovery, pollLoop drain + boundary defenses + non-string-data guard. Anchor: commit [`19d47bf`](https://github.com/smartflowproai-lang/quorum/commit/19d47bf), `agents/verifier/verifier.test.ts`, all 42 passing locally. Verifier has the deepest test surface in the repo; other agents also ship their own tests (scout 8, executor 8, treasurer 20 across 2 files — 78 total in 4 agents). CI runs `npm test --if-present` per agent.
 
 ## Where to dig
 

@@ -21,8 +21,8 @@ rsync -az --delete \
 echo "[deploy] compose up Frankfurt (scout, judge)..."
 ssh "$VPS_A" "cd $REPO_DIR && docker compose up -d scout judge"
 
-echo "[deploy] compose up NYC (executor, treasurer)..."
-ssh "$VPS_B" "cd $REPO_DIR && docker compose up -d executor treasurer"
+echo "[deploy] compose up NYC (verifier, executor, treasurer)..."
+ssh "$VPS_B" "cd $REPO_DIR && docker compose up -d verifier executor treasurer"
 
 echo "[deploy] health check..."
 sleep 5
