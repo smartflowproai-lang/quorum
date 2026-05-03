@@ -16,9 +16,12 @@ import {
 } from './attestation';
 import {
   handleMessage,
+  pollLoop,
   _resetDedupeForTests,
   _resetRateForTests,
 } from './index';
+import type { AxlEnvelope } from '../../shared/axl-wrap';
+import { MAX_PAYLOAD_BYTES } from './types';
 import type {
   JudgeVerdict,
   ValidationResult,
@@ -505,4 +508,94 @@ test('handleMessage: rate limit drops floods from same peer (HIGH #4 — DoS)', 
   // the rate limit ALSO drops some. Assert that we did not send 70 outgoing messages
   // (i.e. a peer cannot 1:1 amplify).
   assert.ok(sent.length < 70, `expected fanout to be capped, got ${sent.length}`);
+});
+
+// ---------------------------------------------------------------------------
+// pollLoop — drain pattern + boundary defenses (bug_005 + merged_bug_007)
+// ---------------------------------------------------------------------------
+
+function makeEnvelope(verdict: JudgeVerdict, from = 'judge'): AxlEnvelope {
+  return {
+    from,
+    data: JSON.stringify({ kind: 'verdict_request', verdict }),
+    ts: Date.now(),
+  };
+}
+
+test('pollLoop: drains all envelopes per poll (bug_005 — no message loss in bursts)', async () => {
+  _resetDedupeForTests();
+  _resetRateForTests();
+  const sent: Array<{ peer: string; payload: unknown }> = [];
+  const verdictA = makeVerdict({ tokenAddress: ('0x' + 'a'.repeat(40)) as `0x${string}` });
+  const verdictB = makeVerdict({ tokenAddress: ('0x' + 'b'.repeat(40)) as `0x${string}` });
+  const verdictC = makeVerdict({ tokenAddress: ('0x' + 'c'.repeat(40)) as `0x${string}` });
+  // 3 envelopes returned in a single poll — single-shot axlReceive() would lose
+  // the 2nd and 3rd. drain pattern must process all three.
+  const batch = [makeEnvelope(verdictA), makeEnvelope(verdictB), makeEnvelope(verdictC)];
+  let pollCount = 0;
+  await pollLoop(
+    {
+      send: async (peer, payload) => { sent.push({ peer, payload }); },
+      probe: makeProbe({ blockNumber: 100n, status: 'success', logs: [{ address: verdictA.tokenAddress, topics: [], data: '0x' }] }),
+      attestLogPath: LOG,
+      recv: async () => {
+        pollCount++;
+        return pollCount === 1 ? batch : [];
+      },
+    },
+    1
+  );
+  // Each verdict should produce one outbound attestation send (probe matches each).
+  // Pre-fix (single-shot axlReceive) would yield <= 1 send. Drain yields 3.
+  assert.equal(sent.length, 3, `drain should process all 3 envelopes, got ${sent.length}`);
+});
+
+test('pollLoop: oversized envelope dropped before JSON.parse (merged_bug_007 — byte cap)', async () => {
+  _resetDedupeForTests();
+  _resetRateForTests();
+  const sent: Array<{ peer: string; payload: unknown }> = [];
+  // Envelope.data exceeds MAX_PAYLOAD_BYTES — must drop BEFORE parsing.
+  const oversized: AxlEnvelope = {
+    from: 'judge',
+    data: 'x'.repeat(MAX_PAYLOAD_BYTES + 1),
+    ts: Date.now(),
+  };
+  let pollCount = 0;
+  await pollLoop(
+    {
+      send: async (peer, payload) => { sent.push({ peer, payload }); },
+      attestLogPath: LOG,
+      recv: async () => {
+        pollCount++;
+        return pollCount === 1 ? [oversized] : [];
+      },
+    },
+    1
+  );
+  assert.equal(sent.length, 0, 'oversized envelope must be dropped, no send');
+});
+
+test('pollLoop: malformed JSON envelope dropped without crash (merged_bug_007 — parse-fail handling)', async () => {
+  _resetDedupeForTests();
+  _resetRateForTests();
+  const sent: Array<{ peer: string; payload: unknown }> = [];
+  const malformed: AxlEnvelope = {
+    from: 'judge',
+    data: '{not valid json',
+    ts: Date.now(),
+  };
+  let pollCount = 0;
+  // Should not throw, should not call send.
+  await pollLoop(
+    {
+      send: async (peer, payload) => { sent.push({ peer, payload }); },
+      attestLogPath: LOG,
+      recv: async () => {
+        pollCount++;
+        return pollCount === 1 ? [malformed] : [];
+      },
+    },
+    1
+  );
+  assert.equal(sent.length, 0, 'malformed envelope must drop silently, no send');
 });

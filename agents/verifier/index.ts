@@ -59,6 +59,8 @@ export interface HandlerDeps {
   attestLogPath?: string;
   // Override clock for tests.
   now?: () => number;
+  // Override AXL receive for tests (returns envelope batch per poll).
+  recv?: () => Promise<AxlEnvelope[]>;
 }
 
 // LRU dedupe — bounded Map. Eviction is FIFO via Map's insertion-order semantics.
@@ -251,7 +253,8 @@ export async function pollLoop(
   while (iterations === undefined || i < iterations) {
     // Drain all envelopes per poll — axlRecv() clears the queue, so single-shot
     // axlReceive() loses any envelopes arriving in the same window past index 0.
-    const envelopes = await axlRecv().catch((e: Error) => {
+    const recv = deps.recv || axlRecv;
+    const envelopes = await recv().catch((e: Error) => {
       console.warn(`[${AGENT_ID}] axlRecv error (will retry):`, e.message);
       return [] as AxlEnvelope[];
     });
