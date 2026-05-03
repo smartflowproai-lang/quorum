@@ -17,7 +17,7 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 
 ## 2. Solana Copy-Bot Event Archive (`payments.db`, `mapper.db`-derived)
 
-- **Size**: 58,432 observed events, ~60 MB compressed, 18-day window (2026-04-01 → 2026-04-18 as of snapshot).
+- **Size**: 58,432 observed events, ~60 MB compressed, 18-day window (2026-04-01 → 2026-04-18 as of last snapshot 2026-04-18; archive re-snapshot deferred post-hackathon — Scout/Judge inference today reads the live Helius WS stream, this archive is the labelled training window).
 - **Chains**: **Solana mainnet only.**
 - **Source**: author's existing public copy-bot infrastructure (14 hand-curated smart-money wallets). Pure-read via Helius RPC.
 - **What QUORUM uses it for**: Solana-native feature extraction — buyer-cluster overlap with prior Solana rugs, sniper-bot share, wallet age, holder count at T+5min.
@@ -34,10 +34,11 @@ Explicit per-chain breakdown of every dataset QUORUM reads from. If a number app
 ## 3b. x402 Payment Index (`payments.db`)
 
 - **Size at most-recent lock 2026-05-02 10:45 UTC**: 7,248,641 raw Base x402 payment candidates over a 20.04-day window (2026-04-12 09:05 → 2026-05-02 10:02 UTC); submission lock at `lockfile-2026-04-30-evening.json` superseded by 2 days of live backfill (6,448,184 raw → 7,248,641 raw, +12.4%).
-- **After wash filter**: 4,000,062 clean payments (44.8% removed as self-referential / dust / burst-pattern noise).
+- **After wash filter**: 4,000,062 clean payments (44.8% removed as self-referential / dust / burst-pattern noise; submission lock at 30.04 had 47.10% reduction → 44.8% at 02.05 most-recent lock — backfill brought in proportionally more clean payments, monotonic progress not query change).
 - **Classified subset** (`is_facilitator_mediated IS NOT NULL` within clean): 808,294 = 20.21% of clean. Of those: 292,947 mediated (=1) / 515,347 P2P (=0).
 - **Wallet diversity (clean)**: 487,330 distinct from-wallets, 478,621 distinct to-wallets (most-recent state `lockfile-2026-05-02-evening.json`; submission lock 439,113 / 408,859 at `lockfile-2026-04-30-evening.json`).
-- **Mean payment**: $1.086.
+- **Mean payment**: $1.086 (rounded from $1.0857 in 02.05 most-recent lock; submission lock at 30.04 had $1.14 — drift reflects backfill bringing in more low-value tail payments, same `wash_flag IS NULL` denominator throughout).
+- **Facilitator-class signing addresses**: 61 tracked = 54 mapped Coinbase CDP-cluster + 7 pattern-inferred candidates (one high-volume unlabelled facilitator likely Bankr or Mogami, classified via `is_facilitator_mediated` based on EIP-3009 `tx.sender` patterns — methodology in mapper internal `facilitators` table).
 - **Backfill progress note**: 13.0% (29.04 09:19 UTC) → 15.01% (30.04 16:10 UTC) → 20.21% (02.05 10:45 UTC). Monotonic backfill against Base RPC `eth_getTransactionByHash`; the gap to 100% is a backfill rate problem, not a query problem. The 29.04 lock published at smartflowproai.substack.com (commit `550cf5e`) is superseded by `lockfile-2026-04-30-evening.json` (submission lock) which is itself superseded as live state by `lockfile-2026-05-02-evening.json` (most-recent indexer state).
 
 ## 4. ERC-8004 Registry (read via 8004scan API)

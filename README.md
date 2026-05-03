@@ -100,7 +100,7 @@ QUORUM is a solo build. AI assistance is part of the workflow and is fully trans
 
 - Strategic direction — what to build, for which sponsor track, when to ship.
 - Architectural decisions — 5-agent shape, AXL choice, EIP-7702 wallet path, what's in scope vs cut.
-- Partner relationships — Divigent / aiprox.dev / AsterPay outreach and feedback intake; reading what each partner needs and shipping into their workflow.
+- Partner relationships — outreach to and feedback intake from x402 ecosystem builders and infra operators; reading what each partner needs and shipping into their workflow.
 - Quality gates — which adversarial findings to apply, which framings to soften, which claims to retract. The 99.82% retraction (see Discipline notes section) is the canonical example: it took builder judgment to spot the methodology error and own it publicly.
 - All on-chain TX decisions — which transactions to send, with which wallet, at which moment, with how much capital exposure.
 - OPSEC — what's public vs private, what's pseudonymised, what gets force-pushed off the public surface when something leaks.
