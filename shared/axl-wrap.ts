@@ -50,6 +50,25 @@ export interface AxlEnvelope {
   ts: number;
 }
 
+/** Backwards-compatible alias used by verifier and judge imports. */
+export type AxlMessage = AxlEnvelope;
+
+/**
+ * Verify an AXL envelope shape. Stub for hackathon: returns true if the
+ * envelope is well-formed (long-lived per-host signing keys deferred
+ * post-hackathon — see README:30 honest caveat). Verifier guards calls
+ * behind QUORUM_REQUIRE_AXL_SIG env flag — default off; flip on once
+ * long-lived per-host keys ship.
+ */
+export async function axlVerify(msg: AxlMessage): Promise<boolean> {
+  return (
+    msg !== null &&
+    typeof msg === 'object' &&
+    typeof msg.from === 'string' &&
+    typeof msg.data === 'string'
+  );
+}
+
 // ---------------------------------------------------------------------------
 // axlSend — POST /send to the local AXL node
 // ---------------------------------------------------------------------------
