@@ -59,8 +59,10 @@ const SMART_MONEY_WALLETS: string[] = (process.env.SMART_MONEY_WALLETS || '')
   .filter(Boolean);
 
 if (SMART_MONEY_WALLETS.length === 0) {
-  SMART_MONEY_WALLETS.push('11111111111111111111111111111111'); // placeholder for dev
-  console.warn(`[${AGENT_ID}] SMART_MONEY_WALLETS not set — using placeholder`);
+  // Solana System Program — safe no-op fallback when env unset (subscription is harmless;
+  // Scout still runs cleanly without the curated wallet list).
+  SMART_MONEY_WALLETS.push('11111111111111111111111111111111');
+  console.warn(`[${AGENT_ID}] SMART_MONEY_WALLETS env not set — defaulting to System Program (no real wallet subscription)`);
 }
 
 // ---------------------------------------------------------------------------
