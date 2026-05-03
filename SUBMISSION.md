@@ -133,7 +133,7 @@ Every claim above maps to a checked-in artifact a judge can open without running
 | 2026-04-28 | `40bfe51` d5-feedback (#4) | FEEDBACK-UNISWAP.md (7 pain points + what worked) |
 | 2026-04-28 | `04a8951` d6-treasurer (#5) | Uniswap-client scaffold (thin Trading API forwarder) + 7-test aspirational target-API suite (TTL/typed errors/Zod — post-hackathon) |
 
-The full commit history is on the public GitHub repo with per-commit AI-assistance attribution (Claude Code (Anthropic) — scaffolding, code review, documentation drafting; architectural and design decisions are mine).
+The full commit history is on the public GitHub repo. AI attribution: Claude Code (Anthropic) used as a coding assistant for scaffolding, code review, and documentation drafting; architectural decisions, integration debugging, on-chain TX decisions, partner positioning, and the public retraction discipline are mine.
 
 ---
 

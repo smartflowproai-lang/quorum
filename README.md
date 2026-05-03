@@ -94,25 +94,25 @@ For the cross-host deploy (Frankfurt + NYC), see `infra/deploy-vps.sh`.
 
 ## Development process
 
-QUORUM is a solo build. AI assistance is part of the workflow and is fully transparent in `git log` — every commit carries a `Co-Authored-By: Claude` trailer.
+QUORUM is a solo build. I used Claude Code (Anthropic) as a coding assistant during the build window — for scaffolding, code review, documentation drafting. Architecture, partner-track positioning, OPSEC framing, and every shipping decision are mine.
 
-**Builder responsibilities (human):**
+**What I own outright:**
 
 - Strategic direction — what to build, for which sponsor track, when to ship.
 - Architectural decisions — 5-agent shape, AXL choice, EIP-7702 wallet path, what's in scope vs cut.
 - Partner relationships — outreach to and feedback intake from x402 ecosystem builders and infra operators; reading what each partner needs and shipping into their workflow.
-- Quality gates — which adversarial findings to apply, which framings to soften, which claims to retract. The 99.82% retraction (see Discipline notes section) is the canonical example: it took builder judgment to spot the methodology error and own it publicly.
+- Quality gates — which adversarial findings to apply, which framings to soften, which claims to retract. The within-window classified-subset retraction (32.7% → 13.0% in commit `550cf5e`) is the canonical example: it took builder judgment to spot the numerator/denominator filter mismatch and own it publicly the same day.
 - All on-chain TX decisions — which transactions to send, with which wallet, at which moment, with how much capital exposure.
 - OPSEC — what's public vs private, what's pseudonymised, what gets force-pushed off the public surface when something leaks.
+- Integration debugging — 5 prior KH MCP sessions ran ok=0/12 before I debugged auth + host resolution myself; all retraction discipline; cross-continent VPS provisioning + chaos-testing; every receipt landed on Base mainnet.
 
-**AI-assisted (Claude Opus 4.7):**
+**Where Claude Code helped:**
 
-- Code authoring — TypeScript agents, scripts, decoders.
-- Documentation drafting — this README, SUBMISSION, FEEDBACK files.
-- Adversarial reviews — the same model in fresh-context sessions reviewing its own prior work to catch flaws (the find-minimum-N-flaws pattern visible in the commit log as repeated "review → fix → re-review" loops).
-- Operational scripting — chaos tests, periodic attestation cycles, watchdog.
+- Initial code scaffolding for TypeScript agents and scripts.
+- Code review passes and adversarial-style "find-the-flaws" review cycles.
+- Documentation drafting (this README, SUBMISSION, FEEDBACK files) — final voice and framing decisions are mine.
 
-The decisions about WHAT to build, FOR WHOM, and WHEN to ship are the builder's; the implementation typing is shared with AI. Per ETHGlobal rules: AI assists development, it does not replace builder judgment about what is worth building.
+Per ETHGlobal rules: AI assists development; the builder owns the architecture, the integrations, the ship decisions, and the public retraction discipline.
 
 
 ## License + credits
@@ -121,4 +121,4 @@ MIT — see [LICENSE](./LICENSE).
 
 Built by **Tom Smart** ([@TomSmart_ai](https://x.com/TomSmart_ai)) for ETHGlobal OpenAgents 2026.
 
-AI assistance via Claude Code (Anthropic) — scaffolding, code review, documentation. All final design and integration decisions are mine. Per-commit AI-assistance attribution in git history.
+AI assistance via Claude Code (Anthropic) — scaffolding, code review, documentation drafting. All final design, integration debugging, on-chain decisions, partner positioning, and shipping calls are mine.
