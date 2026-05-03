@@ -48,7 +48,7 @@ Scout ──► Judge ──► Verifier ──► Executor ──► Base attes
 |-------|------|--------|
 | Scout | Watches 14 Solana smart-money wallets, cross-refs EVM bridge graph | Helius WS + bridge-linker scaffold (commit `dbf4367`) |
 | Judge | 10-feature classifier (6 Solana-native, 2 cross-chain, 2 token-structural) | Backtest target ≥70% precision on Solana-native subset |
-| Verifier | Validates Judge verdicts against on-chain reality before attestation | **38 tests, CI green** (`agents/verifier/verifier.test.ts`) |
+| Verifier | Validates Judge verdicts against on-chain reality before attestation | **38 verifier tests, all passing locally** (`agents/verifier/verifier.test.ts`); CI runs `npm test --if-present` across agents — verifier is the only agent with shipped test scripts today |
 | Executor | Posts attestations to Base via KeeperHub MCP `call_workflow` | First receipt on-chain (see above) |
 | Treasurer | Holds USDC float, pays per-call in x402, swaps via Uniswap Trading API (thin forwarder) | **7-test aspirational suite** describing target API — typed errors + Zod + TTL + FetchLike injection (`agents/treasurer/test/uniswap-client.test.ts`); current client is a forwarder, implementation post-hackathon |
 

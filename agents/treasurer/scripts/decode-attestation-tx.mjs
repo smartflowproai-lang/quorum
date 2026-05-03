@@ -51,7 +51,7 @@ console.log("Calldata size:", calldata.length, "bytes");
 // Verify marker
 const marker = calldata.slice(0, 8).toString("utf8");
 if (marker !== "QUORUMV1") {
-  console.error("ERROR: marker mismatch (expected QUORUMV1, got  + marker + )");
+  console.error(`ERROR: marker mismatch (expected QUORUMV1, got ${marker})`);
   process.exit(1);
 }
 console.log("Marker:", marker, "OK");
