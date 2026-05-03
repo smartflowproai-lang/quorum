@@ -257,16 +257,108 @@ export class Treasurer {
           console.error(`[${AGENT_ID}] handleAxlMessage error:`, e.message)
         );
       }
-      await sleep(500);
+      // Gated sleep — only when the queue was empty this poll. Drain pattern
+      // shouldn't artificially delay the next batch.
+      if (envelopes.length === 0) {
+        await sleep(500);
+      }
     }
   }
 
+  // Single-AXL-node deployment routes by msg.type at the application layer.
+  // Treasurer's domain is wallet/payments; verdict/attestation traffic that
+  // lands here in the shared-queue race condition (see SUBMISSION:80 honest
+  // framing) is forwarded to the correct sibling agent best-effort. Production
+  // deployment should run per-agent AXL nodes — this routing table is the
+  // hackathon band-aid.
+  private static readonly OWN_TYPES = new Set([
+    'balance_request',
+    'rebalance_request',
+    'x402_challenge',
+    'heartbeat',
+  ]);
+  private static readonly ROUTE_BY_TYPE: Record<string, string> = {
+    verdict_request: 'verifier',
+    reprobe_request: 'judge',
+    reprobe_response: 'verifier',
+    attestation: 'executor',
+    candidate: 'judge',
+  };
+
+  // Boundary defenses (size cap + freshness + dedupe). Mirrored on the
+  // verifier shape; production hardening rotation deferred per SUBMISSION:80.
+  private static readonly MAX_PAYLOAD_BYTES = 64 * 1024;
+  private static readonly FRESHNESS_MS = 60_000;
+  private static readonly DEDUPE_MAX = 256;
+  private dedupe: Map<string, number> = new Map();
+
+  private alreadySeen(key: string, now: number): boolean {
+    // Sweep expired entries (>2× freshness keeps a small grace window).
+    const ttl = Treasurer.FRESHNESS_MS * 2;
+    for (const [k, t] of this.dedupe) {
+      if (now - t > ttl) this.dedupe.delete(k);
+    }
+    if (this.dedupe.has(key)) return true;
+    if (this.dedupe.size >= Treasurer.DEDUPE_MAX) {
+      const first = this.dedupe.keys().next().value;
+      if (first) this.dedupe.delete(first);
+    }
+    this.dedupe.set(key, now);
+    return false;
+  }
+
   private async handleAxlMessage(envelope: AxlEnvelope): Promise<void> {
+    // Size cap on raw envelope bytes BEFORE parsing.
+    if (typeof envelope.data !== 'string') {
+      console.warn(`[${AGENT_ID}] dropping non-string envelope.data from ${envelope.from}`);
+      return;
+    }
+    if (Buffer.byteLength(envelope.data, 'utf8') > Treasurer.MAX_PAYLOAD_BYTES) {
+      console.warn(`[${AGENT_ID}] dropping oversized envelope from ${envelope.from}`);
+      return;
+    }
+
     let msg: { type: string; [key: string]: unknown };
     try {
       msg = JSON.parse(envelope.data) as { type: string; [key: string]: unknown };
     } catch {
       console.warn(`[${AGENT_ID}] ignoring non-JSON from ${envelope.from}`);
+      return;
+    }
+
+    if (!msg.type || typeof msg.type !== 'string') {
+      console.warn(`[${AGENT_ID}] dropping envelope without msg.type from ${envelope.from}`);
+      return;
+    }
+
+    // Application-layer routing for the shared-AXL-node race: forward types
+    // that aren't ours to the correct sibling. Drop silently if no route.
+    if (!Treasurer.OWN_TYPES.has(msg.type)) {
+      const target = Treasurer.ROUTE_BY_TYPE[msg.type];
+      if (target && target !== AGENT_ID) {
+        await axlSend(target, msg).catch((e: Error) =>
+          console.warn(`[${AGENT_ID}] forward ${msg.type}→${target} failed:`, e.message)
+        );
+      }
+      return;
+    }
+
+    // Freshness — reject envelopes without a numeric ts or outside the window.
+    const now = Date.now();
+    if (typeof envelope.ts !== 'number' || !Number.isFinite(envelope.ts)) {
+      console.warn(`[${AGENT_ID}] dropping envelope without ts from ${envelope.from}`);
+      return;
+    }
+    if (Math.abs(now - envelope.ts) > Treasurer.FRESHNESS_MS) {
+      console.warn(`[${AGENT_ID}] dropping stale envelope from ${envelope.from}`);
+      return;
+    }
+
+    // Dedupe — (from, type, ts) is good enough for hackathon; verifier uses a
+    // verdict-canonical hash for stronger semantics.
+    const dedupeKey = `${envelope.from}:${msg.type}:${envelope.ts}`;
+    if (this.alreadySeen(dedupeKey, now)) {
+      console.warn(`[${AGENT_ID}] duplicate ${msg.type} from ${envelope.from} suppressed`);
       return;
     }
 
@@ -292,7 +384,8 @@ export class Treasurer {
       case 'heartbeat':
         break;
       default:
-        console.warn(`[${AGENT_ID}] unknown msg type: ${msg.type}`);
+        // Unreachable — OWN_TYPES guard above ensures we only switch on known cases.
+        console.warn(`[${AGENT_ID}] unhandled own-type: ${msg.type}`);
     }
   }
 

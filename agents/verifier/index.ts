@@ -82,6 +82,14 @@ function alreadySeen(key: string, now: number): boolean {
   dedupe.set(key, now);
   return false;
 }
+// Rollback a dedupe key when downstream work (validation, issueAttestation,
+// send) throws. Without this, an idempotent retry from Judge gets silently
+// suppressed for 5 minutes because alreadySeen() locked the key on first
+// attempt before the throw. Pair this with rateRefund() — both are crash-
+// recovery primitives.
+function rollbackDedupe(key: string): void {
+  dedupe.delete(key);
+}
 export function _resetDedupeForTests(): void {
   dedupe.clear();
 }
@@ -191,6 +199,26 @@ export async function handleMessage(
 
   const incoming = parseIncoming(msg.payload);
   if (!incoming) {
+    // Application-layer routing for the shared-AXL-node race: if payload has
+    // a known sibling-routed type, forward to the correct agent before drop.
+    // Production = per-agent AXL nodes (see SUBMISSION:80 deferred framing).
+    const payloadType = (msg.payload as { kind?: string; type?: string } | null)?.kind
+      ?? (msg.payload as { kind?: string; type?: string } | null)?.type;
+    const ROUTE_BY_TYPE: Record<string, string> = {
+      balance_request: 'treasurer',
+      rebalance_request: 'treasurer',
+      x402_challenge: 'treasurer',
+      payment_receipt: 'executor',
+    };
+    if (payloadType && typeof payloadType === 'string') {
+      const target = ROUTE_BY_TYPE[payloadType];
+      if (target && target !== AGENT_ID) {
+        await send(target, msg.payload).catch((e: Error) =>
+          console.warn(`[${AGENT_ID}] forward ${payloadType}→${target} failed:`, e.message)
+        );
+        return;
+      }
+    }
     console.warn(`[${AGENT_ID}] dropping malformed message from ${msg.from}`);
     return;
   }
@@ -212,23 +240,32 @@ export async function handleMessage(
     try {
       validation = await validateVerdict(verdict, { probe: deps.probe });
     } catch {
-      // Validation failure rolls back the rate token (we did not produce work).
+      // Validation failure rolls back rate token AND dedupe key — we did not
+      // produce work and a Judge retry must not be suppressed.
       rateRefund(msg.from);
+      rollbackDedupe(key);
       throw new Error('validation crashed');
     }
-    if (validation.valid) {
-      const attestation = await issueAttestation(verdict, validation, {
-        logPath: deps.attestLogPath,
+    try {
+      if (validation.valid) {
+        const attestation = await issueAttestation(verdict, validation, {
+          logPath: deps.attestLogPath,
+        });
+        await send(ATTEST_TARGET, { kind: 'attestation', attestation });
+        return;
+      }
+      await send(REPROBE_TARGET, {
+        kind: 'reprobe_request',
+        verdict,
+        failures: clampFailures(validation.failures),
       });
-      await send(ATTEST_TARGET, { kind: 'attestation', attestation });
       return;
+    } catch (e) {
+      // Attestation issue or send failure — rollback dedupe so a Judge retry
+      // isn't silently suppressed for 5 minutes.
+      rollbackDedupe(key);
+      throw e;
     }
-    await send(REPROBE_TARGET, {
-      kind: 'reprobe_request',
-      verdict,
-      failures: clampFailures(validation.failures),
-    });
-    return;
   }
 
   // reprobe_request — count toward rate limit (no dedupe; reprobe is a request
