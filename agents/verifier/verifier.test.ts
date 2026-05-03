@@ -599,3 +599,30 @@ test('pollLoop: malformed JSON envelope dropped without crash (merged_bug_007 â€
   );
   assert.equal(sent.length, 0, 'malformed envelope must drop silently, no send');
 });
+
+test('pollLoop: non-string envelope.data dropped without crash (Run #3 bug_007 regression)', async () => {
+  _resetDedupeForTests();
+  _resetRateForTests();
+  const sent: Array<{ peer: string; payload: unknown }> = [];
+  // Buffer.byteLength throws on non-string input â€” guard must catch BEFORE the
+  // byte-cap check. Cast through unknown to bypass the AxlEnvelope `data: string`
+  // type contract, simulating a malformed peer that ignores the contract.
+  const nonString = {
+    from: 'judge',
+    data: Buffer.from('whatever') as unknown as string,
+    ts: Date.now(),
+  } as AxlEnvelope;
+  let pollCount = 0;
+  await pollLoop(
+    {
+      send: async (peer, payload) => { sent.push({ peer, payload }); },
+      attestLogPath: LOG,
+      recv: async () => {
+        pollCount++;
+        return pollCount === 1 ? [nonString] : [];
+      },
+    },
+    1
+  );
+  assert.equal(sent.length, 0, 'non-string envelope.data must drop silently, no send');
+});

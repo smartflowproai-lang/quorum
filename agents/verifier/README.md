@@ -12,7 +12,7 @@ out — or fires back a `reprobe_request` when it doesn't.
 | `validator.ts`    | Verdict validator. Schema re-assert + chain-bound on-chain probe |
 | `attestation.ts`  | Attestation issuance. Allow-listed JSONL log, append mutex, fsync, persistent live-submit cap |
 | `index.ts`        | Main loop. Size cap, freshness, sig, dedupe (input-only), token-bucket rate limit, handler |
-| `verifier.test.ts`| node:test suite (38 tests) |
+| `verifier.test.ts`| node:test suite (42 tests) |
 
 ## Run
 

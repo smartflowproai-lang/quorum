@@ -259,6 +259,13 @@ export async function pollLoop(
       return [] as AxlEnvelope[];
     });
     for (const msg of envelopes) {
+      // Type guard — Buffer.byteLength throws on non-string input, so a
+      // malformed peer sending Buffer/object/number in `data` would crash the
+      // entire poll. Drop and continue.
+      if (typeof msg.data !== 'string') {
+        console.warn(`[${AGENT_ID}] dropping non-string envelope.data from ${msg.from}`);
+        continue;
+      }
       // Hard byte cap BEFORE JSON.parse — drop oversized frames before any
       // parsing work, matching the header contract of handleMessage.
       if (Buffer.byteLength(msg.data, 'utf8') > MAX_PAYLOAD_BYTES) {
