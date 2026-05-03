@@ -60,13 +60,13 @@ export interface AxlEnvelope {
 export type AxlMessage = AxlEnvelope;
 
 /**
- * Verify an AXL envelope shape. Stub for hackathon: returns true if the
- * envelope is well-formed (long-lived per-host signing keys deferred
- * post-hackathon — see README:30 honest caveat). Verifier guards calls
- * behind QUORUM_REQUIRE_AXL_SIG env flag — default off; flip on once
- * long-lived per-host keys ship.
+ * Shape-only check on an AXL envelope: returns true if the envelope is
+ * structurally well-formed (has a string `from` and string `data`). This is
+ * NOT a cryptographic signature verification — long-lived per-host signing
+ * keys are deferred post-hackathon (see README:30 honest caveat). Operators
+ * who flip QUORUM_REQUIRE_AXL_SHAPE=true get shape gating, not crypto.
  */
-export async function axlVerify(msg: AxlMessage): Promise<boolean> {
+export async function axlVerifyShape(msg: AxlMessage): Promise<boolean> {
   return (
     msg !== null &&
     typeof msg === 'object' &&
@@ -74,6 +74,13 @@ export async function axlVerify(msg: AxlMessage): Promise<boolean> {
     typeof msg.data === 'string'
   );
 }
+
+/**
+ * @deprecated Renamed to `axlVerifyShape` to remove the implication of
+ * cryptographic signature verification. This alias preserves backwards
+ * compatibility with existing imports; new code should use `axlVerifyShape`.
+ */
+export const axlVerify = axlVerifyShape;
 
 // ---------------------------------------------------------------------------
 // axlSend — POST /send to the local AXL node
@@ -89,8 +96,15 @@ export async function axlVerify(msg: AxlMessage): Promise<boolean> {
  * Scale note: at 14 wallets the naive one-shot send is fine. For >1 K peers
  * a batched /broadcast or publish-subscribe channel would replace this.
  */
+// JSON.stringify replacer that coerces bigint to string. Without this, payloads
+// from viem (block.number, tx.gasUsed, etc.) throw TypeError mid-send and the
+// peer never gets the message — caller swallows in `.catch(() => null)` and the
+// failure is invisible to the rebalance/attestation roundtrip.
+const bigintSafe = (_: string, v: unknown): unknown =>
+  typeof v === 'bigint' ? v.toString() : v;
+
 export async function axlSend(peer: string, payload: unknown): Promise<void> {
-  const body = JSON.stringify({ to: peer, data: JSON.stringify(payload) });
+  const body = JSON.stringify({ to: peer, data: JSON.stringify(payload, bigintSafe) }, bigintSafe);
   const res = await fetch(`${AXL_HTTP_BASE}/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

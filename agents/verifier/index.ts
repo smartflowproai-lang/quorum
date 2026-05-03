@@ -1,20 +1,23 @@
 // VERIFIER agent — main loop
 //
-// Hardening (per hostile review):
-//  - zod schema-parses every inbound payload at the boundary (HIGH/MED #9, #3)
-//  - hard byte cap on incoming AXL frames (HIGH #3 — DoS via huge payloads)
-//  - signature check on AXL envelope when QUORUM_REQUIRE_AXL_SIG=true (HIGH #4)
-//  - freshness window on msg.ts (HIGH #4 — replay)
-//  - LRU dedupe by (from, attestationId) (HIGH #4 — amplification)
-//  - per-peer rate limit (HIGH #4 — DoS via spam)
-//  - failure strings echoed to peers are length-clamped (HIGH #3 — log/peer flood)
+// Hardening:
+//  - zod schema-parses every inbound payload at the boundary
+//  - hard byte cap on incoming AXL frames (DoS via huge payloads)
+//  - shape check on AXL envelope when QUORUM_REQUIRE_AXL_SHAPE=true — note
+//    this is structural well-formedness, not cryptographic signature; long-
+//    lived per-host signing keys are deferred post-hackathon (README:30)
+//  - freshness window on msg.ts (replay protection)
+//  - LRU dedupe by (from, attestationId) (amplification)
+//  - per-peer rate limit (DoS via spam)
+//  - failure strings echoed to peers are length-clamped (log/peer flood)
 
 import { createHash } from 'node:crypto';
 import {
   axlSend,
-  axlReceive,
-  axlVerify,
+  axlRecv,
+  axlVerifyShape,
   type AxlMessage,
+  type AxlEnvelope,
 } from '../../shared/axl-wrap';
 import { validateVerdict, type OnChainProbe } from './validator';
 import { issueAttestation } from './attestation';
@@ -29,7 +32,18 @@ const AGENT_ID = 'verifier';
 const POLL_INTERVAL_MS = Number(process.env.VERIFIER_POLL_INTERVAL_MS ?? 1000);
 const ATTEST_TARGET = process.env.AXL_ATTEST_TARGET || 'executor';
 const REPROBE_TARGET = process.env.AXL_REPROBE_TARGET || 'judge';
-const REQUIRE_SIG = process.env.QUORUM_REQUIRE_AXL_SIG === 'true';
+// Backwards compat: accept either the new SHAPE flag or the old SIG flag.
+// Old flag is deprecated and emits a warning at startup.
+const REQUIRE_SHAPE =
+  process.env.QUORUM_REQUIRE_AXL_SHAPE === 'true' ||
+  process.env.QUORUM_REQUIRE_AXL_SIG === 'true';
+if (process.env.QUORUM_REQUIRE_AXL_SIG === 'true') {
+  console.warn(
+    `[verifier] QUORUM_REQUIRE_AXL_SIG is deprecated — rename to QUORUM_REQUIRE_AXL_SHAPE. ` +
+      `This is a SHAPE check, not cryptographic signature verification (long-lived per-host ` +
+      `signing keys deferred post-hackathon, README:30).`
+  );
+}
 const FRESHNESS_MS = Number(process.env.VERIFIER_FRESHNESS_MS ?? 60_000);
 const RATE_LIMIT_PER_PEER_PER_MIN = Number(process.env.VERIFIER_PEER_RATE ?? 60);
 
@@ -163,11 +177,12 @@ export async function handleMessage(
     return;
   }
 
-  // Signature — required when QUORUM_REQUIRE_AXL_SIG=true.
-  if (REQUIRE_SIG) {
-    const ok = await axlVerify(msg).catch(() => false);
+  // Shape gate — required when QUORUM_REQUIRE_AXL_SHAPE=true. Structural
+  // check only (string `from` + string `data`), not cryptographic signature.
+  if (REQUIRE_SHAPE) {
+    const ok = await axlVerifyShape(msg).catch(() => false);
     if (!ok) {
-      console.warn(`[${AGENT_ID}] dropping unsigned/invalid message from ${msg.from}`);
+      console.warn(`[${AGENT_ID}] dropping malformed envelope from ${msg.from}`);
       return;
     }
   }
@@ -234,17 +249,24 @@ export async function pollLoop(
 ): Promise<void> {
   let i = 0;
   while (iterations === undefined || i < iterations) {
-    const msg = await axlReceive(AGENT_ID).catch(() => null);
-    if (msg) {
-      // Raw envelopes from /recv carry payload as a JSON string in `data`.
-      // handleMessage operates on the parsed `payload` field, so populate it
-      // here. Invalid JSON is dropped with a warning — never crashes the loop.
+    // Drain all envelopes per poll — axlRecv() clears the queue, so single-shot
+    // axlReceive() loses any envelopes arriving in the same window past index 0.
+    const envelopes = await axlRecv().catch((e: Error) => {
+      console.warn(`[${AGENT_ID}] axlRecv error (will retry):`, e.message);
+      return [] as AxlEnvelope[];
+    });
+    for (const msg of envelopes) {
+      // Hard byte cap BEFORE JSON.parse — drop oversized frames before any
+      // parsing work, matching the header contract of handleMessage.
+      if (Buffer.byteLength(msg.data, 'utf8') > MAX_PAYLOAD_BYTES) {
+        console.warn(`[${AGENT_ID}] dropping oversized envelope from ${msg.from}`);
+        continue;
+      }
       let parsed: unknown;
       try {
         parsed = JSON.parse(msg.data);
       } catch {
         console.warn(`[${AGENT_ID}] dropping message with invalid JSON from ${msg.from}`);
-        i++;
         continue;
       }
       try {
@@ -253,7 +275,8 @@ export async function pollLoop(
         // Log the error type but never the raw message — RPC errors can carry secrets.
         console.error(`[${AGENT_ID}] handler error:`, (err as Error).name);
       }
-    } else {
+    }
+    if (envelopes.length === 0) {
       await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     }
     i++;
@@ -262,7 +285,7 @@ export async function pollLoop(
 
 async function main(): Promise<void> {
   console.log(
-    `[${AGENT_ID}] starting — attest→${ATTEST_TARGET} reprobe→${REPROBE_TARGET} poll=${POLL_INTERVAL_MS}ms sig=${REQUIRE_SIG}`
+    `[${AGENT_ID}] starting — attest→${ATTEST_TARGET} reprobe→${REPROBE_TARGET} poll=${POLL_INTERVAL_MS}ms shape=${REQUIRE_SHAPE}`
   );
   await pollLoop();
 }
