@@ -75,3 +75,9 @@ preSubmit-*.md
 round2-qa-bank*.md
 overnight-chain*.sh
 overnight-watchdog*.sh
+
+# Test coverage output
+coverage/
+
+# npm pack artifacts
+*.tgz
