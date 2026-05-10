@@ -153,10 +153,10 @@ Calling out the gaps so you don't trip over them.
 
 ## Read more
 
-- [SUBMISSION.md](./SUBMISSION.md) — submission writeup, partner integrations
 - [DATA-COVERAGE.md](./DATA-COVERAGE.md) — dataset boundaries
 - [CHAOS-TEST.md](./CHAOS-TEST.md) — failover test harness
-- [FEEDBACK-UNISWAP.md](./FEEDBACK-UNISWAP.md), [FEEDBACK-KeeperHub.md](./FEEDBACK-KeeperHub.md), [FEEDBACK-GENSYN.md](./FEEDBACK-GENSYN.md) — integration friction notes from the build window
+- [archive/hackathon/SUBMISSION.md](./archive/hackathon/SUBMISSION.md) — full hackathon writeup, partner integrations
+- [archive/hackathon/](./archive/hackathon/) — sponsor feedback files (Uniswap / KeeperHub / Gensyn) and judge intro
 
 ---
 

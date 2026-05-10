@@ -28,7 +28,7 @@ USDC float, Permit2 signing, Uniswap Trading API calls, x402 settlements — all
 
 ## Integration friction
 
-Real friction I hit with the Trading API and Permit2 is documented in [`/FEEDBACK-UNISWAP.md`](../../FEEDBACK-UNISWAP.md) — Permit2 primaryType ambiguity, Base chainId vs Sepolia confusion, EXACT_OUTPUT semantics for x402 use cases, undocumented protocol selection defaults, and a few more. Targeting the $250 Uniswap partner-feedback bounty.
+Real friction I hit with the Trading API and Permit2 is documented in [`/FEEDBACK-UNISWAP.md`](../../archive/hackathon/FEEDBACK-UNISWAP.md) — Permit2 primaryType ambiguity, Base chainId vs Sepolia confusion, EXACT_OUTPUT semantics for x402 use cases, undocumented protocol selection defaults, and a few more. Targeting the $250 Uniswap partner-feedback bounty.
 
 ## What's stub vs what's wired
 
@@ -56,5 +56,5 @@ The agent reads gas requests from AXL, settles via x402, replies with a settleme
 
 - `../executor/` — the agent that asks Treasurer to pay for KeeperHub jobs
 - `../../shared/axl-wrap.ts` — typed envelope wrapper, what Treasurer sends and receives over the AXL mesh
-- `../../FEEDBACK-UNISWAP.md` — integration friction log
-- `../../SUBMISSION.md` — full hackathon writeup
+- `../../archive/hackathon/FEEDBACK-UNISWAP.md` — integration friction log
+- `../../archive/hackathon/SUBMISSION.md` — full hackathon writeup

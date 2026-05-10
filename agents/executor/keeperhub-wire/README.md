@@ -33,7 +33,7 @@ recovery action; nothing is implicit:
 
 ## Idempotency contract
 
-Per `FEEDBACK-KeeperHub.md` item 4, KH MCP doesn't yet honour
+Per `archive/hackathon/FEEDBACK-KeeperHub.md` item 4, KH MCP doesn't yet honour
 `Idempotency-Key` server-side. The wire enforces dedup itself: every
 `call_workflow` invocation is keyed on
 `sha256(workflow_id || \0 || canonicalJson(input))`. A retry after a missed
