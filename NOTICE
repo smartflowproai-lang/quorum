@@ -1,0 +1,36 @@
+QUORUM
+Copyright (c) 2026 Tom Smart
+
+This product includes third-party software. License texts are referenced
+inline; full texts available at the upstream repositories.
+
+Runtime dependencies:
+
+- viem (MIT License)
+  EVM client library for Base, Ethereum, and EIP-712 / Permit2 flows.
+  https://github.com/wevm/viem
+
+- zod (MIT License)
+  Runtime schema validation for agent message envelopes and config.
+  https://github.com/colinhacks/zod
+
+- ws (MIT License)
+  WebSocket client used by Scout (Helius WS) and Treasurer.
+  https://github.com/websockets/ws
+
+- ethers (MIT License)
+  Ethereum library used by Treasurer for legacy signer paths.
+  https://github.com/ethers-io/ethers.js
+
+- axios (MIT License)
+  HTTP client used by Treasurer for non-RPC endpoints.
+  https://github.com/axios/axios
+
+Build / development dependencies (not bundled at runtime):
+
+- typescript (Apache License 2.0) — https://github.com/microsoft/TypeScript
+- tsx (MIT License) — https://github.com/privatenumber/tsx
+- @types/node, @types/ws (MIT License — DefinitelyTyped)
+  https://github.com/DefinitelyTyped/DefinitelyTyped
+
+QUORUM itself is licensed under MIT — see LICENSE.
