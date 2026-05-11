@@ -6,6 +6,10 @@ MIT · `quorum.smartflowproai.com` · built by Tom Smart
 
 [![CI](https://github.com/smartflowproai-lang/quorum/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowproai-lang/quorum/actions)
 
+<!-- LIVE-STATS:START -->
+**Live:** 1 streaming-receipts cycle · 0.9985 USDC paid through · 17 days uptime · 12.41% wash-classified share on last-14d traffic · last attestation [`0x19bb1d0e…`](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) · _refreshed 2026-05-11T19:55:44Z_ — see [`public/live-stats.json`](public/live-stats.json)
+<!-- LIVE-STATS:END -->
+
 ---
 
 ## Status
