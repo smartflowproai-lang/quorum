@@ -78,7 +78,7 @@ If you want to embed one piece — say, just the Verifier — into your own stac
 cd agents/verifier
 npm install
 npm run build
-npm test                   # 42 tests
+npm test                   # 44 tests (verifier; counts vary per agent)
 npm start                  # reads config from ../../.env
 ```
 
