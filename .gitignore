@@ -23,6 +23,9 @@ wallet-secret.json
 secrets/
 treasurer/wallet/*-priv.*
 
+# Long-lived per-host signing keys: pubkeys are committable, secret keys are not.
+agents/*/keys/*.sec
+
 # Logs
 *.log
 logs/

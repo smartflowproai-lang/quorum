@@ -29,11 +29,11 @@ Scout ──► Judge ──► Verifier ──► Executor ──► Base attes
 |-----------|---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | Scout     | Watches Solana smart-money wallets, cross-refs EVM bridge graph                                   | Helius WS client + bridge-linker scaffold; 8 tests                       |
 | Judge     | 10-feature classifier (6 Solana-native, 2 cross-chain, 2 token-structural)                        | Backtest harness; precision targets documented in `DATA-COVERAGE.md`     |
-| Verifier  | Validates Judge verdicts against on-chain reality before attestation                              | 42 passing tests (schema, ed25519, ERC-8004 roundtrip, replay rejection) |
+| Verifier  | Validates Judge verdicts against on-chain reality before attestation                              | 44 passing tests (schema, ed25519, ERC-8004 roundtrip, replay rejection) |
 | Executor  | Posts attestations to Base via KeeperHub MCP `call_workflow`                                      | Live MCP session converged ok=11/12; settlement TX on-chain              |
 | Treasurer | Holds USDC float, pays per-call in x402, swaps via Uniswap (thin client)                         | 1 supervised swap on-chain; 7-test aspirational suite for the client     |
 
-CI runs `npm test --if-present` per agent. 78 tests across 4 agents.
+CI runs `npm test --if-present` per agent. 80 tests across 4 agents.
 
 ---
 
@@ -41,7 +41,7 @@ CI runs `npm test --if-present` per agent. 78 tests across 4 agents.
 
 All three from Treasurer wallet `0xd779cE46…58C893` — EIP-7702 set-code delegate (`eth_getCode` returns the `0xef0100…` prefix, captured in `logs/d10-eth-getcode-treasurer.json`).
 
-1. **Verdict attestation** — [`0x19bb1d0e…`](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) (block 45,476,871). Calldata-only TX holding canonical evidence hash signed independently by Judge ed25519 + Verifier ed25519. Both pubkeys + sigs embedded; verifiable via `agents/treasurer/scripts/decode-attestation-tx.mjs`. Caveat: keypairs are generated fresh by the script to represent the role-signing shape; long-lived per-host signing keys are deferred.
+1. **Verdict attestation** — [`0x19bb1d0e…`](https://basescan.org/tx/0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22) (block 45,476,871). Calldata-only TX holding canonical evidence hash signed independently by Judge ed25519 + Verifier ed25519. Both pubkeys + sigs embedded; verifiable via `agents/treasurer/scripts/decode-attestation-tx.mjs`. Per-host long-lived keys now provisioned by `infra/deploy-vps.sh` (`agents/judge/keys/host-frankfurt.{pub,sec}` on Frankfurt, `agents/verifier/keys/host-nyc.{pub,sec}` on NYC); dry-run sample via `agents/treasurer/scripts/sample-attestation-long-lived.mjs` builds the QUORUMV1 calldata + verifies both signatures inline without spending gas.
 2. **KH x402 settlement** — [`0xce40d380…`](https://basescan.org/tx/0xce40d3804a8b057813193b34839e63c6da0e994bd6a794e81382209e416d4409) (block 45,478,048). 0.10 USDC = 100,000 atomic per `challenge.accepts[0]` from KH MCP. Treasurer → KH `payTo` `0xf591c99c…3709544`. Spec-conformant `x402v2 scheme=exact` payment leg landed.
 3. **Treasurer swap** — [`0xc03b8350…`](https://basescan.org/tx/0xc03b8350c982c805e5e2b4aa072fb69138e26c2364b7a70c3ef3b34079b49849) (block 45,300,516). 1 USDC → WETH via Permit2 + Universal Router, routed through the EIP-7702 delegate. Manual supervised receipt; programmatic loop deferred for wallet-isolation reasons.
 
@@ -143,7 +143,7 @@ Output format in `logs/d10-quorum-attestation-tx.json`. No QUORUM-side state req
 
 Calling out the gaps so you don't trip over them.
 
-- **Per-host signing keys deferred.** The on-chain attestation shows the role-signing shape (two distinct ed25519 sigs over the canonical evidence hash). Long-lived per-host keys are post-hackathon work.
+- ~~**Per-host signing keys deferred.**~~ Long-lived per-host ed25519 keypairs now live at `agents/judge/keys/host-frankfurt.{pub,sec}` (Frankfurt) and `agents/verifier/keys/host-nyc.{pub,sec}` (NYC). `infra/deploy-vps.sh` provisions them idempotently — first run generates, subsequent runs reuse so the on-chain identity is stable across attestations. Shared loader at `shared/host-keys.ts` runs an ed25519-only + keypair self-check at load time; sign-verify roundtrip covered by 2 dedicated tests in `agents/verifier/verifier.test.ts`. Secret halves are gitignored and chmod 600; pubkeys are committable.
 - **Treasurer swap loop deferred.** One supervised swap landed (TX #3 above). The programmatic loop is the 7-test aspirational suite, not the live client. The current client is a forwarder.
 - **Judge classifier is backtest-target precision, not measured-on-live precision.** See `DATA-COVERAGE.md` for what each dataset covers.
 - **Indexer coverage is partial.** Classified-subset rate was 13.0% at submission, 20.21% two days later (lockfiles in repo). Same `wash_flag IS NULL` denominator throughout. Public retraction of an earlier wrong number (32.7% → 13.0%) is in commit `550cf5e`.
