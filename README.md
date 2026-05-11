@@ -108,7 +108,7 @@ npm install
 node scripts/pay-x402-challenge.mjs <challenge-json-path>
 ```
 
-Settlement TX format documented in `logs/d10-kh-paid-settlement-tx.json`. The client is a thin forwarder over `viem`; the 7-test suite in `test/uniswap-client.test.ts` describes the typed-error / Zod / TTL shape the swap path is heading toward — current swap implementation is supervised, not programmatic.
+Settlement TX format documented in `logs/d10-kh-paid-settlement-tx.json`. The client is a thin forwarder over `viem`; the 7-test suite in `test/uniswap-client.test.ts` describes the typed-error / Zod / TTL shape the swap path enforces. The programmatic top-up loop now runs weekly (1 USDC → WETH on Base, Mon 09:00 UTC) via `agents/treasurer/scripts/swap-usdc-weth.mjs` — see [`infra/programmatic-swap-weekly.sh`](infra/programmatic-swap-weekly.sh) and the per-week receipts in `logs/d12-programmatic-swap-week{1..4}.json`.
 
 ### 5. Cross-host AXL mesh (self-host)
 
@@ -144,7 +144,7 @@ Output format in `logs/d10-quorum-attestation-tx.json`. No QUORUM-side state req
 Calling out the gaps so you don't trip over them.
 
 - ~~**Per-host signing keys deferred.**~~ Long-lived per-host ed25519 keypairs now live at `agents/judge/keys/host-frankfurt.{pub,sec}` (Frankfurt) and `agents/verifier/keys/host-nyc.{pub,sec}` (NYC). `infra/deploy-vps.sh` provisions them idempotently — first run generates, subsequent runs reuse so the on-chain identity is stable across attestations. Shared loader at `shared/host-keys.ts` runs an ed25519-only + keypair self-check at load time; sign-verify roundtrip covered by 2 dedicated tests in `agents/verifier/verifier.test.ts`. Secret halves are gitignored and chmod 600; pubkeys are committable.
-- **Treasurer swap loop deferred.** One supervised swap landed (TX #3 above). The programmatic loop is the 7-test aspirational suite, not the live client. The current client is a forwarder.
+- ~~**Treasurer swap loop deferred.**~~ Programmatic loop runs unattended on cron — `/etc/cron.d/quorum-weekly-swap` fires `infra/programmatic-swap-weekly.sh` every Monday 09:00 UTC, swapping 1 USDC → WETH via the Uniswap Trading API (Universal Router + Permit2). First fire scheduled 2026-05-18 09:00 UTC; validation target is 4 consecutive weekly swaps (week-N receipts land in `logs/d12-programmatic-swap-weekN.json`). Initial dry-run on 2026-05-11 confirmed budget (ETH=0.0022, USDC=53.01) and writes the same JSON shape live runs emit; see `logs/d12-programmatic-swap-week1.json`.
 - **Judge classifier is backtest-target precision, not measured-on-live precision.** See `DATA-COVERAGE.md` for what each dataset covers.
 - **Indexer coverage is partial.** Classified-subset rate was 13.0% at submission, 20.21% two days later (lockfiles in repo). Same `wash_flag IS NULL` denominator throughout. Public retraction of an earlier wrong number (32.7% → 13.0%) is in commit `550cf5e`.
 - **KH MCP debugging is finicky.** First 5 sessions ran ok=0/12 before auth + host resolution were sorted. The wire client documents the path; expect to spend time on auth.
