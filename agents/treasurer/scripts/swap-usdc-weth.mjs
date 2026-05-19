@@ -310,7 +310,11 @@ async function main() {
   const swapRes = await fetch(`${UNISWAP_API_BASE}/swap`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": process.env.UNISWAP_API_KEY },
-    body: JSON.stringify({ quote: quote.quote, permitSignature }),
+    body: JSON.stringify({
+      quote: quote.quote,
+      permitData: quote.permitData,
+      signature: permitSignature,
+    }),
   });
   if (!swapRes.ok) {
     const txt = await swapRes.text().catch(() => "");

@@ -60,7 +60,9 @@ export interface QuoteResponse {
 export interface SwapRequest {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   quote: any;
-  permitSignature: Hex;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  permitData: any;
+  signature: Hex;
 }
 
 export interface SwapResponse {
@@ -277,7 +279,7 @@ export class UniswapClient {
    * Builds the swap transaction via /v1/swap and broadcasts it on-chain.
    *
    * Steps:
-   *   1. POST /v1/swap with {quote, permitSignature} → returns calldata.
+   *   1. POST /v1/swap with {quote, permitData, signature} → returns calldata.
    *   2. Build viem walletClient with signer.
    *   3. sendTransaction({ to, data, value }).
    *   4. waitForTransactionReceipt → return TxReceipt.
@@ -293,7 +295,8 @@ export class UniswapClient {
     // Step 1: POST /v1/swap to get calldata
     const swapBody: SwapRequest = {
       quote: signedQuote.quoteResponse.quote,
-      permitSignature: signedQuote.permitSignature,
+      permitData: signedQuote.quoteResponse.permitData,
+      signature: signedQuote.permitSignature,
     };
 
     const swapRes = await httpRequestWithRetry(`${UNISWAP_API_BASE}/swap`, {
