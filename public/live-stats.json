@@ -1,9 +1,9 @@
 {
   "schema": "quorum-live-stats/v1",
-  "updated_at": "2026-05-26T04:00:01Z",
+  "updated_at": "2026-05-27T04:00:01Z",
   "streaming_receipts_cycles": 1,
   "usdc_paid_total": 0.9985,
-  "days_uptime": 31,
+  "days_uptime": 32,
   "classified_traffic_share_pct": 12.41,
   "last_attestation_tx": "0x19bb1d0eb990de5152c753e185cd44bca3bf7445abafa982132263a0e1763f22",
   "first_commit_utc": "2026-04-24T18:31:00+02:00",
